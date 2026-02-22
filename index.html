@@ -1,0 +1,4096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Calidad de Concreto</title>
+    <!-- Cargar librerías ANTES de los scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            color: #e8eaed;
+        }
+
+        .header {
+            background: rgba(15, 20, 40, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, #00d4aa 0%, #0077ff 100%);
+            padding: 0.8rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .logo-upload-btn {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: #0077ff;
+            border: 2px solid rgba(15, 20, 40, 0.9);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            color: white;
+        }
+
+        .logo-upload-btn:hover {
+            background: #00d4aa;
+        }
+
+        #logoUpload {
+            display: none;
+        }
+
+        .logo-text h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa 0%, #0077ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: text;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .logo-text h1:hover {
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .logo-text h1[contenteditable]:focus {
+            outline: 2px solid #00d4aa;
+            outline-offset: 4px;
+        }
+
+        .logo-text p {
+            font-size: 0.85rem;
+            color: #8b92a8;
+            margin-top: 0.25rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            background: transparent;
+            border: none;
+            color: #8b92a8;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e8eaed;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.2) 0%, rgba(0, 119, 255, 0.2) 100%);
+            color: #00d4aa;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .dashboard-controls {
+            background: rgba(20, 25, 45, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 100;
+        }
+
+        #mixFilterDropdown {
+            position: absolute !important;
+            z-index: 9999 !important;
+        }
+
+        #mixFilterDropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #mixFilterDropdown::-webkit-scrollbar-track {
+            background: rgba(30, 35, 55, 0.4);
+            border-radius: 4px;
+        }
+
+        #mixFilterDropdown::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 170, 0.5);
+            border-radius: 4px;
+        }
+
+        #mixFilterDropdown::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 170, 0.7);
+        }
+
+        .dashboard-controls label {
+            color: #8b92a8;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .dashboard-controls select {
+            background: rgba(30, 35, 55, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e8eaed;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            min-width: 250px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-controls select[multiple] {
+            min-height: 120px;
+        }
+
+        .dashboard-controls select option {
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .dashboard-controls select option:checked {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.3) 0%, rgba(0, 119, 255, 0.3) 100%);
+        }
+
+        .dashboard-controls select:hover {
+            border-color: rgba(0, 212, 170, 0.5);
+        }
+
+        .dashboard-controls select:focus {
+            outline: none;
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(20, 25, 45, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 212, 170, 0.2);
+            border-color: rgba(0, 212, 170, 0.3);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: #8b92a8;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-info .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e8eaed;
+        }
+
+        .stat-info .change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .change.positive {
+            color: #00d4aa;
+        }
+
+        .change.negative {
+            color: #ff4757;
+        }
+
+        .chart-card {
+            background: rgba(20, 25, 45, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header h2 {
+            font-size: 1.3rem;
+            color: #e8eaed;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4aa 0%, #0077ff 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e8eaed;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ai:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: rgba(20, 25, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: #e8eaed;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #8b92a8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #e8eaed;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            font-size: 1.1rem;
+            color: #00d4aa;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: #8b92a8;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            background: rgba(30, 35, 55, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e8eaed;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .add-test-btn {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px dashed rgba(0, 212, 170, 0.3);
+            color: #00d4aa;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .add-test-btn:hover {
+            background: rgba(0, 212, 170, 0.2);
+            border-color: rgba(0, 212, 170, 0.5);
+        }
+
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: #ff4757;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 71, 87, 0.2);
+            border-color: rgba(255, 71, 87, 0.5);
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table thead {
+            background: rgba(30, 35, 55, 0.6);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #8b92a8;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.success {
+            background: rgba(0, 212, 170, 0.2);
+            color: #00d4aa;
+        }
+
+        .status-badge.warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-badge.danger {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #8b92a8;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e8eaed;
+            transform: translateY(-2px);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-item {
+            background: rgba(30, 35, 55, 0.4);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .detail-item label {
+            display: block;
+            font-size: 0.85rem;
+            color: #8b92a8;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item .value {
+            font-size: 1.1rem;
+            color: #e8eaed;
+            font-weight: 600;
+        }
+
+        .test-results {
+            margin-top: 2rem;
+        }
+
+        .test-card {
+            background: rgba(30, 35, 55, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .test-header h4 {
+            color: #00d4aa;
+            font-size: 1rem;
+        }
+
+        .age-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .age-item {
+            background: rgba(40, 45, 65, 0.4);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .age-item .age {
+            font-size: 0.85rem;
+            color: #8b92a8;
+            margin-bottom: 0.5rem;
+        }
+
+        .age-item .strength {
+            font-size: 1.3rem;
+            color: #e8eaed;
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #8b92a8;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #e8eaed;
+        }
+
+        .empty-state p {
+            margin-bottom: 2rem;
+        }
+
+        .ai-analysis {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .ai-analysis h4 {
+            color: #8b5cf6;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-analysis .insight {
+            background: rgba(30, 35, 55, 0.4);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #8b5cf6;
+        }
+
+        .ai-analysis .insight:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-analysis .insight-title {
+            color: #e8eaed;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-analysis .insight-text {
+            color: #8b92a8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo-icon" onclick="document.getElementById('logoUpload').click()">
+                <svg id="defaultLogo" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M3 3h18v18H3z"/>
+                    <path d="M3 9h18"/>
+                    <path d="M9 21V9"/>
+                </svg>
+                <img id="customLogo" style="display: none;" alt="Logo">
+                <div class="logo-upload-btn" title="Cambiar logo">📷</div>
+                <input type="file" id="logoUpload" accept="image/*">
+            </div>
+            <div class="logo-text">
+                <h1 contenteditable="true" id="companyName">Control de Calidad</h1>
+                <p>Sistema de Gestión de Concreto</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="switchTab('dashboard')">
+                <span>📊</span> Dashboard
+            </button>
+            <button class="nav-item" onclick="switchTab('database')">
+                <span>🗄️</span> Base de Datos
+            </button>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content active">
+            <div class="dashboard-controls">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; position: relative; z-index: 200;">
+                    <label>Filtrar por Mezclas:</label>
+                    <button id="mixFilterBtn" onclick="toggleMixFilter()" style="padding: 0.75rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.2); color: #e8eaed; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; min-width: 300px;">
+                        <span id="mixFilterLabel">Todas las Mezclas</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="mixFilterDropdown" style="display: none; position: absolute; top: 100%; left: 0; margin-top: 0.5rem; background: rgba(15, 20, 35, 0.98); border: 2px solid rgba(0, 212, 170, 0.3); border-radius: 12px; padding: 1.5rem; min-width: 350px; max-height: 450px; overflow-y: auto; z-index: 2000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);">
+                        <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #00d4aa; font-weight: 600; font-size: 1.1rem;">Seleccionar Mezclas:</span>
+                            <button onclick="clearMixFilter()" style="padding: 0.4rem 1rem; border-radius: 6px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #e8eaed; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+                                🔄 Limpiar
+                            </button>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; cursor: pointer; border-radius: 8px; transition: background 0.2s; margin-bottom: 0.75rem; background: rgba(0, 212, 170, 0.15); border: 2px solid rgba(0, 212, 170, 0.4);" onmouseover="this.style.background='rgba(0, 212, 170, 0.25)'" onmouseout="this.style.background='rgba(0, 212, 170, 0.15)'">
+                            <input type="checkbox" value="all" checked onchange="handleMixFilterChange(this)" style="cursor: pointer; width: 20px; height: 20px; accent-color: #00d4aa;">
+                            <span style="color: #e8eaed; font-weight: 600; font-size: 1rem;">✓ Todas las Mezclas</span>
+                        </label>
+                        <div id="mixFilterCheckboxes"></div>
+                        <button onclick="applyMixFilter()" style="margin-top: 1.5rem; padding: 1rem; width: 100%; border-radius: 10px; background: linear-gradient(135deg, #00d4aa 0%, #0077ff 100%); border: none; color: white; cursor: pointer; font-weight: 700; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 212, 170, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 212, 170, 0.4)'">
+                            ✓ Aplicar Filtro
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" id="statsGrid">
+                <!-- Stats cards will be inserted here -->
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Evolución de Resistencia por Mezcla</h2>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <select id="mixEvolutionSelector" onchange="updateEvolutionChart()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
+                            <option value="">Seleccionar Mezcla</option>
+                        </select>
+                        <select id="evolutionTimeScale" onchange="updateEvolutionChart()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
+                            <option value="date">Por Fecha</option>
+                            <option value="week">Por Semana</option>
+                        </select>
+                        <div style="position: relative;">
+                            <button id="ageFilterBtn" onclick="toggleAgeFilter()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed; cursor: pointer;">
+                                📅 Filtrar Edades
+                            </button>
+                            <div id="ageFilterDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: rgba(20, 25, 45, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 1rem; min-width: 200px; z-index: 1000; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+                                <div style="margin-bottom: 0.5rem; color: #00d4aa; font-weight: 600;">Seleccionar Edades:</div>
+                                <div id="ageCheckboxes"></div>
+                                <button onclick="applyAgeFilter()" style="margin-top: 1rem; padding: 0.5rem 1rem; width: 100%; border-radius: 8px; background: #00d4aa; border: none; color: white; cursor: pointer; font-weight: 600;">
+                                    Aplicar
+                                </button>
+                            </div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed; cursor: pointer;">
+                            <input type="checkbox" id="showCementEfficiency" onchange="updateEvolutionChart()" style="cursor: pointer;">
+                            <span>⚡ Eficiencia del Cemento</span>
+                        </label>
+                        <button class="btn-ai" onclick="analyzeEvolutionWithAI()" id="evolutionAiBtn" style="margin-left: auto;">
+                            <span>🤖</span> Análisis AI
+                        </button>
+                        <button class="btn-primary" onclick="generateEvolutionReport()">
+                            <span>📄</span> Generar Reporte
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+                <div id="evolutionChartLegend" style="margin-top: 1rem; padding: 1rem; background: rgba(30, 35, 55, 0.4); border-radius: 8px; display: none;">
+                    <div style="color: #8b92a8; font-size: 0.9rem; margin-bottom: 0.5rem;">Eficiencia del Cemento = Resistencia (PSI) / Contenido de Cemento (lb/yd³)</div>
+                    <div id="efficiencyStats"></div>
+                </div>
+                <div id="evolutionAiAnalysisContainer"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Distribución de Resistencia General</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn-ai" onclick="analyzeWithAI()" id="aiBtn">
+                            <span>🤖</span> Análisis AI
+                        </button>
+                        <button class="btn-primary" onclick="generatePDFReport()">
+                            <span>📄</span> Generar Reporte
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="strengthChart"></canvas>
+                </div>
+                <div id="aiAnalysisContainer"></div>
+            </div>
+        </div>
+
+            <!-- Normal Distribution by Mix Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Distribución Normal por Mezcla</h2>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <select id="normalDistAgeSelector" onchange="renderNormalDistChart()" style="padding: 0.5rem 1rem; border-radius: 8px; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
+                            <option value="all">Todas las Edades</option>
+                        </select>
+                        <button class="btn-ai" onclick="analyzeNormalDistWithAI()" id="normalDistAiBtn">
+                            <span>🤖</span> Análisis AI
+                        </button>
+                        <button class="btn-primary" onclick="generateNormalDistReport()">
+                            <span>📄</span> Generar Reporte
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 420px;">
+                    <canvas id="normalDistChart"></canvas>
+                </div>
+                <div id="normalDistStats" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
+                <div id="normalDistAiContainer"></div>
+            </div>
+
+        <!-- Database Tab -->
+        <div id="databaseTab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; color: #e8eaed;">Base de Datos de Mezclas</h2>
+                <button class="btn-primary" onclick="openAddMixModal()">
+                    <span>➕</span> Nueva Mezcla
+                </button>
+            </div>
+
+            <div id="mixListContainer">
+                <!-- Mix list will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Mix Modal -->
+    <div id="addMixModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Mezcla de Concreto</h2>
+                <button class="close-btn" onclick="closeAddMixModal()">✕</button>
+            </div>
+            <form onsubmit="saveMix(event)">
+                <div class="modal-body">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h3>📋 Información Básica</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>ID de Mezcla *</label>
+                                <input type="text" id="mixId" required placeholder="ej: MIX-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Proyecto *</label>
+                                <input type="text" id="project" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Contratista</label>
+                                <input type="text" id="contractor">
+                            </div>
+                            <div class="form-group">
+                                <label>Planta</label>
+                                <input type="text" id="plant">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <textarea id="description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Resistencia Especificada (PSI) *</label>
+                            <input type="number" id="specStrength" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Edad Requerida (días) *</label>
+                            <input type="number" id="requiredAge" required value="28" placeholder="Ej: 7, 28, 56, 90">
+                            <small style="color: #8b92a8; font-size: 0.85rem;">Edad a la cual se debe cumplir la resistencia especificada</small>
+                        </div>
+                    </div>
+
+                    <!-- Materials -->
+                    <div class="form-section">
+                        <h3>🏗️ Materiales</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Cemento (lb/yd³)</label>
+                                <input type="number" step="0.1" id="cement">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedor Cemento</label>
+                                <input type="text" id="cementSupplier">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Agregado Grueso (lb/yd³)</label>
+                                <input type="number" step="0.1" id="coarseAgg">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedor Agregado Grueso</label>
+                                <input type="text" id="coarseAggSupplier">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Arena Manufacturada (lb/yd³)</label>
+                                <input type="number" step="0.1" id="manSand">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedor Arena Manufacturada</label>
+                                <input type="text" id="manSandSupplier">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Arena Natural (lb/yd³)</label>
+                                <input type="number" step="0.1" id="natSand">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedor Arena Natural</label>
+                                <input type="text" id="natSandSupplier">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Agua (gal/yd³)</label>
+                            <input type="number" step="0.1" id="water">
+                        </div>
+                    </div>
+
+                    <!-- Tests -->
+                    <div class="form-section">
+                        <h3>🔬 Pruebas de Resistencia</h3>
+                        <div id="testsContainer"></div>
+                        <button type="button" class="add-test-btn" onclick="addTestRow()">
+                            ➕ Agregar Prueba
+                        </button>
+                    </div>
+
+                    <!-- QC Manager -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>Gerente de QC</label>
+                            <input type="text" id="qcManager">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeAddMixModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span>💾</span> Guardar Mezcla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailMixId">Detalles de Mezcla</h2>
+                <button class="close-btn" onclick="closeDetailModal()">✕</button>
+            </div>
+            <div class="modal-body" id="detailContent">
+                <!-- Detail content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentChart = null;
+        let testRowCounter = 0;
+
+        // ===== DATA MANAGEMENT =====
+        function getMixes() {
+            const data = localStorage.getItem('concreteMixes');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveMixes(mixes) {
+            localStorage.setItem('concreteMixes', JSON.stringify(mixes));
+        }
+
+        function getCompanyName() {
+            return localStorage.getItem('companyName') || 'Control de Calidad';
+        }
+
+        function saveCompanyName(name) {
+            localStorage.setItem('companyName', name);
+        }
+
+        function loadCompanyName() {
+            const name = getCompanyName();
+            document.getElementById('companyName').textContent = name;
+        }
+
+        // ===== LOGO MANAGEMENT =====
+        function getCompanyLogo() {
+            return localStorage.getItem('companyLogo');
+        }
+
+        function saveCompanyLogo(logoDataUrl) {
+            localStorage.setItem('companyLogo', logoDataUrl);
+        }
+
+        function loadCompanyLogo() {
+            const logo = getCompanyLogo();
+            if (logo) {
+                document.getElementById('customLogo').src = logo;
+                document.getElementById('customLogo').style.display = 'block';
+                document.getElementById('defaultLogo').style.display = 'none';
+            }
+        }
+
+        // ===== INITIALIZATION =====
+        function initializeData() {
+            const mixes = getMixes();
+            if (mixes.length === 0) {
+                const sampleMixes = [
+                    {
+                        id: "MIX-001",
+                        project: "Edificio Central",
+                        contractor: "Constructora ABC",
+                        plant: "Planta Norte",
+                        description: "Concreto para columnas principales",
+                        specStrength: 4000,
+                        requiredAge: 28,
+                        materials: {
+                            cement: 564,
+                            cementSupplier: "CEMEX",
+                            coarseAgg: 1850,
+                            coarseAggSupplier: "Agregados del Norte",
+                            manSand: 1200,
+                            manSandSupplier: "Arena Industrial",
+                            natSand: 0,
+                            natSandSupplier: "",
+                            water: 28
+                        },
+                        tests: [
+                            {
+                                date: "2024-01-15",
+                                slump: 4.5,
+                                ages: [
+                                    { age: 7, strengths: [3200, 3250, 3180] },
+                                    { age: 28, strengths: [4350, 4400, 4320] }
+                                ]
+                            },
+                            {
+                                date: "2024-01-22",
+                                slump: 4.0,
+                                ages: [
+                                    { age: 7, strengths: [3300, 3280, 3320] },
+                                    { age: 28, strengths: [4450, 4480, 4420] }
+                                ]
+                            }
+                        ],
+                        qcManager: "Ing. María García"
+                    },
+                    {
+                        id: "MIX-002",
+                        project: "Pavimento Industrial",
+                        contractor: "Pavimentos XYZ",
+                        plant: "Planta Sur",
+                        description: "Concreto para pavimento de alta resistencia",
+                        specStrength: 5000,
+                        requiredAge: 28,
+                        materials: {
+                            cement: 658,
+                            cementSupplier: "Holcim",
+                            coarseAgg: 1780,
+                            coarseAggSupplier: "Agregados Premium",
+                            manSand: 1150,
+                            manSandSupplier: "Arena Industrial",
+                            natSand: 0,
+                            natSandSupplier: "",
+                            water: 26
+                        },
+                        tests: [
+                            {
+                                date: "2024-02-01",
+                                slump: 3.5,
+                                ages: [
+                                    { age: 7, strengths: [4100, 4150, 4080] },
+                                    { age: 28, strengths: [5450, 5500, 5420] }
+                                ]
+                            }
+                        ],
+                        qcManager: "Ing. Carlos Rodríguez"
+                    }
+                ];
+                saveMixes(sampleMixes);
+            }
+        }
+
+        // ===== DASHBOARD RENDERING =====
+        let selectedMixIds = ['all']; // Global variable to track selected mixes
+
+        function updateMixFilter() {
+            const mixes = getMixes();
+            const container = document.getElementById('mixFilterCheckboxes');
+            
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            mixes.forEach(mix => {
+                const isChecked = selectedMixIds.includes(mix.id);
+                const label = document.createElement('label');
+                label.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem; cursor: pointer; border-radius: 8px; transition: all 0.2s; margin-bottom: 0.4rem; background: rgba(30, 35, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);';
+                label.onmouseover = function() { 
+                    this.style.background = 'rgba(0, 212, 170, 0.1)'; 
+                    this.style.borderColor = 'rgba(0, 212, 170, 0.3)';
+                    this.style.transform = 'translateX(4px)';
+                };
+                label.onmouseout = function() { 
+                    this.style.background = 'rgba(30, 35, 55, 0.6)'; 
+                    this.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    this.style.transform = 'translateX(0)';
+                };
+                
+                label.innerHTML = `
+                    <input type="checkbox" value="${mix.id}" ${isChecked ? 'checked' : ''} onchange="handleMixFilterChange(this)" style="cursor: pointer; width: 20px; height: 20px; accent-color: #00d4aa;">
+                    <span style="color: #e8eaed; font-size: 0.95rem;">${mix.id} - ${mix.project}</span>
+                `;
+                
+                container.appendChild(label);
+            });
+            
+            updateMixFilterLabel();
+        }
+
+        function toggleMixFilter() {
+            const dropdown = document.getElementById('mixFilterDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function handleMixFilterChange(checkbox) {
+            const value = checkbox.value;
+            const allCheckbox = document.querySelector('#mixFilterDropdown input[value="all"]');
+            
+            if (value === 'all') {
+                // If "all" is checked, uncheck all others
+                if (checkbox.checked) {
+                    document.querySelectorAll('#mixFilterCheckboxes input[type="checkbox"]').forEach(cb => {
+                        cb.checked = false;
+                    });
+                    selectedMixIds = ['all'];
+                } else {
+                    // Can't uncheck "all" if nothing else is selected
+                    checkbox.checked = true;
+                }
+            } else {
+                // Individual mix checkbox
+                if (checkbox.checked) {
+                    // Uncheck "all" when selecting individual mixes
+                    if (allCheckbox) allCheckbox.checked = false;
+                    
+                    if (selectedMixIds.includes('all')) {
+                        selectedMixIds = [value];
+                    } else {
+                        selectedMixIds.push(value);
+                    }
+                } else {
+                    selectedMixIds = selectedMixIds.filter(id => id !== value);
+                    
+                    // If nothing is selected, check "all"
+                    if (selectedMixIds.length === 0) {
+                        if (allCheckbox) allCheckbox.checked = true;
+                        selectedMixIds = ['all'];
+                    }
+                }
+            }
+            
+            updateMixFilterLabel();
+        }
+
+        function updateMixFilterLabel() {
+            const label = document.getElementById('mixFilterLabel');
+            if (!label) return;
+            
+            if (selectedMixIds.includes('all')) {
+                label.textContent = 'Todas las Mezclas';
+            } else if (selectedMixIds.length === 1) {
+                label.textContent = `${selectedMixIds.length} mezcla seleccionada`;
+            } else {
+                label.textContent = `${selectedMixIds.length} mezclas seleccionadas`;
+            }
+        }
+
+        function clearMixFilter() {
+            const allCheckbox = document.querySelector('#mixFilterDropdown input[value="all"]');
+            if (allCheckbox) allCheckbox.checked = true;
+            
+            document.querySelectorAll('#mixFilterCheckboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            
+            selectedMixIds = ['all'];
+            updateMixFilterLabel();
+        }
+
+        function applyMixFilter() {
+            document.getElementById('mixFilterDropdown').style.display = 'none';
+            renderDashboard();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('mixFilterDropdown');
+            const btn = document.getElementById('mixFilterBtn');
+            if (dropdown && btn && !dropdown.contains(event.target) && !btn.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function renderDashboard() {
+            updateMixFilter();
+            
+            const allMixes = getMixes();
+            
+            let mixes;
+            if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                mixes = allMixes;
+            } else {
+                mixes = allMixes.filter(m => selectedMixIds.includes(m.id));
+            }
+            
+            // Calculate statistics
+            let totalTests = 0;
+            let passedTests = 0;
+            let totalSlump = 0;
+            let slumpCount = 0;
+            let avgStrength = 0;
+            let strengthCount = 0;
+            let totalCement = 0;
+            let totalStrength28 = 0;
+            let strength28Count = 0;
+
+            mixes.forEach(mix => {
+                totalCement += mix.materials.cement || 0;
+                const requiredAge = mix.requiredAge || 28; // Default to 28 if not specified
+                
+                mix.tests.forEach(test => {
+                    if (test.slump) {
+                        totalSlump += test.slump;
+                        slumpCount++;
+                    }
+                    test.ages.forEach(ageData => {
+                        ageData.strengths.forEach(strength => {
+                            // Only count tests at the required age for compliance and average
+                            if (ageData.age === requiredAge) {
+                                totalTests++;
+                                avgStrength += strength;
+                                strengthCount++;
+                                if (strength >= mix.specStrength) {
+                                    passedTests++;
+                                }
+                            }
+                            
+                            if (ageData.age === 28) {
+                                totalStrength28 += strength;
+                                strength28Count++;
+                            }
+                        });
+                    });
+                });
+            });
+
+            const complianceRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : 0;
+            const avgSlump = slumpCount > 0 ? (totalSlump / slumpCount).toFixed(1) : 0;
+            avgStrength = strengthCount > 0 ? Math.round(avgStrength / strengthCount) : 0;
+            
+            // Calculate standard deviation for required age
+            let sumSquaredDiff = 0;
+            let strengthValues = [];
+            mixes.forEach(mix => {
+                const requiredAge = mix.requiredAge || 28;
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        if (ageData.age === requiredAge) {
+                            ageData.strengths.forEach(strength => {
+                                strengthValues.push(strength);
+                                sumSquaredDiff += Math.pow(strength - avgStrength, 2);
+                            });
+                        }
+                    });
+                });
+            });
+            const stdDev = strengthCount > 1 ? Math.round(Math.sqrt(sumSquaredDiff / (strengthCount - 1))) : 0;
+            
+            const avgCement = mixes.length > 0 ? totalCement / mixes.length : 0;
+            const avg28DayStrength = strength28Count > 0 ? totalStrength28 / strength28Count : 0;
+            const cementEfficiency = avgCement > 0 ? (avg28DayStrength / avgCement).toFixed(2) : 0;
+
+            // Render stats cards
+            const selectedCount = selectedMixIds.includes('all') ? allMixes.length : selectedMixIds.length;
+            const statsHTML = `
+                <div class="stat-card" onclick="switchTab('database')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #00d4aa 0%, #0077ff 100%);">
+                        📊
+                    </div>
+                    <div class="stat-info">
+                        <h3>Mezclas ${selectedCount === allMixes.length ? 'Totales' : 'Seleccionadas'}</h3>
+                        <div class="value">${mixes.length}</div>
+                        <div class="change positive">
+                            <span>↗</span> Ver Base de Datos
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        ✓
+                    </div>
+                    <div class="stat-info">
+                        <h3>Tasa de Cumplimiento</h3>
+                        <div class="value">${complianceRate}%</div>
+                        <div class="change ${complianceRate >= 95 ? 'positive' : 'negative'}">
+                            <span>${complianceRate >= 95 ? '↗' : '↘'}</span> ${passedTests}/${totalTests} pruebas
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        💪
+                    </div>
+                    <div class="stat-info">
+                        <h3>Resistencia Promedio</h3>
+                        <div class="value">${avgStrength} PSI</div>
+                        <div class="change positive">
+                            <span>±${stdDev}</span> PSI (Desv. Std)
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        📏
+                    </div>
+                    <div class="stat-info">
+                        <h3>Slump Promedio</h3>
+                        <div class="value">${avgSlump}"</div>
+                        <div class="change positive">
+                            <span>↗</span> En rango
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        ⚡
+                    </div>
+                    <div class="stat-info">
+                        <h3>Eficiencia del Cemento</h3>
+                        <div class="value">${cementEfficiency}</div>
+                        <div class="change positive">
+                            <span>PSI/lb</span> @ 28 días
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('statsGrid').innerHTML = statsHTML;
+            renderChart(mixes);
+            populateNormalDistAgeSelector();
+            renderNormalDistChart();
+        }
+
+        // ===== CHART RENDERING =====
+        function renderChart(mixes) {
+            const ctx = document.getElementById('strengthChart');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const datasets = [];
+            const colors = [
+                { bg: 'rgba(0, 212, 170, 0.2)', border: '#00d4aa' },
+                { bg: 'rgba(0, 119, 255, 0.2)', border: '#0077ff' },
+                { bg: 'rgba(139, 92, 246, 0.2)', border: '#8b5cf6' },
+                { bg: 'rgba(236, 72, 153, 0.2)', border: '#ec4899' },
+                { bg: 'rgba(251, 146, 60, 0.2)', border: '#fb923c' }
+            ];
+
+            mixes.forEach((mix, index) => {
+                const ageStrengthMap = {};
+                
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        if (!ageStrengthMap[ageData.age]) {
+                            ageStrengthMap[ageData.age] = [];
+                        }
+                        ageStrengthMap[ageData.age].push(...ageData.strengths);
+                    });
+                });
+
+                const data = Object.keys(ageStrengthMap).sort((a, b) => a - b).map(age => ({
+                    x: parseInt(age),
+                    y: Math.round(ageStrengthMap[age].reduce((a, b) => a + b, 0) / ageStrengthMap[age].length)
+                }));
+
+                const color = colors[index % colors.length];
+                datasets.push({
+                    label: `${mix.id} - ${mix.project}`,
+                    data: data,
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.3
+                });
+
+                datasets.push({
+                    label: `${mix.id} - Especificación`,
+                    data: [
+                        { x: Math.min(...data.map(d => d.x)), y: mix.specStrength },
+                        { x: Math.max(...data.map(d => d.x)), y: mix.specStrength }
+                    ],
+                    borderColor: color.border,
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0
+                });
+            });
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e8eaed',
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 25, 45, 0.95)',
+                            titleColor: '#e8eaed',
+                            bodyColor: '#8b92a8',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Edad (días)',
+                                color: '#8b92a8',
+                                font: { size: 14, weight: '600' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#8b92a8'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Resistencia (PSI)',
+                                color: '#8b92a8',
+                                font: { size: 14, weight: '600' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#8b92a8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== EVOLUTION CHART (Time-based) =====
+        let evolutionChart = null;
+
+        function updateMixEvolutionSelector() {
+            const selector = document.getElementById('mixEvolutionSelector');
+            const mixes = getMixes();
+            
+            selector.innerHTML = '<option value="">Seleccionar Mezcla</option>';
+            mixes.forEach(mix => {
+                const option = document.createElement('option');
+                option.value = mix.id;
+                option.textContent = `${mix.id} - ${mix.project}`;
+                selector.appendChild(option);
+            });
+
+            // Select first mix by default if available
+            if (mixes.length > 0) {
+                selector.value = mixes[0].id;
+                updateEvolutionChart();
+            }
+        }
+
+        function updateEvolutionChart() {
+            const mixId = document.getElementById('mixEvolutionSelector').value;
+            const timeScale = document.getElementById('evolutionTimeScale').value;
+            const showEfficiency = document.getElementById('showCementEfficiency').checked;
+            
+            if (!mixId) {
+                if (evolutionChart) {
+                    evolutionChart.destroy();
+                    evolutionChart = null;
+                }
+                document.getElementById('evolutionChartLegend').style.display = 'none';
+                return;
+            }
+
+            const mixes = getMixes();
+            const mix = mixes.find(m => m.id === mixId);
+            if (!mix) return;
+
+            const ctx = document.getElementById('evolutionChart');
+            if (evolutionChart) {
+                evolutionChart.destroy();
+            }
+
+            // Get selected ages from filter
+            const selectedAges = getSelectedAges();
+            
+            // Update age checkboxes if not yet populated
+            updateAgeCheckboxes(mix);
+
+            // Prepare data grouped by date/week and age
+            const dataByAge = {};
+            const requiredAge = mix.requiredAge || 28;
+            const cementContent = mix.materials.cement || 1; // Avoid division by zero
+
+            // Group data by date/week and age, then calculate averages
+            const dataByDateAndAge = {};
+            
+            mix.tests.forEach(test => {
+                test.ages.forEach(ageData => {
+                    const age = ageData.age;
+                    
+                    // Filter by selected ages if any are selected
+                    if (selectedAges.length > 0 && !selectedAges.includes(age)) {
+                        return;
+                    }
+                    
+                    const testDate = new Date(test.date);
+                    let timeKey;
+                    let timeLabel;
+                    let xValue;
+                    
+                    if (timeScale === 'week') {
+                        // Group by week
+                        const weekStart = new Date(testDate);
+                        weekStart.setDate(testDate.getDate() - testDate.getDay());
+                        timeKey = weekStart.getTime();
+                        timeLabel = `Sem ${Math.ceil((testDate - new Date(testDate.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))}`;
+                        xValue = timeKey;
+                    } else {
+                        // Group by date
+                        timeKey = test.date;
+                        timeLabel = test.date;
+                        xValue = testDate.getTime();
+                    }
+                    
+                    const key = `${age}_${timeKey}`;
+                    if (!dataByDateAndAge[key]) {
+                        dataByDateAndAge[key] = {
+                            age: age,
+                            x: xValue,
+                            label: timeLabel,
+                            date: test.date,
+                            strengths: []
+                        };
+                    }
+                    
+                    // Add all strengths for this date/week and age
+                    dataByDateAndAge[key].strengths.push(...ageData.strengths);
+                });
+            });
+            
+            // Calculate averages for each age group
+            Object.values(dataByDateAndAge).forEach(entry => {
+                const age = entry.age;
+                if (!dataByAge[age]) {
+                    dataByAge[age] = [];
+                }
+                
+                // Calculate average strength for this date/week
+                const avgStrength = entry.strengths.reduce((sum, s) => sum + s, 0) / entry.strengths.length;
+                const yValue = showEfficiency ? (avgStrength / cementContent) : avgStrength;
+                
+                dataByAge[age].push({
+                    x: entry.x,
+                    y: yValue,
+                    originalStrength: avgStrength,
+                    label: entry.label,
+                    date: entry.date,
+                    count: entry.strengths.length
+                });
+            });
+
+            // Create datasets for each age
+            const datasets = [];
+            const colors = [
+                { border: 'rgb(0, 212, 170)', bg: 'rgba(0, 212, 170, 0.1)' },
+                { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.1)' },
+                { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.1)' },
+                { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.1)' },
+                { border: 'rgb(147, 51, 234)', bg: 'rgba(147, 51, 234, 0.1)' },
+                { border: 'rgb(236, 72, 153)', bg: 'rgba(236, 72, 153, 0.1)' }
+            ];
+
+            let efficiencyStats = {};
+
+            Object.keys(dataByAge).sort((a, b) => Number(a) - Number(b)).forEach((age, idx) => {
+                const color = colors[idx % colors.length];
+                const isRequiredAge = Number(age) === requiredAge;
+                
+                // Calculate efficiency stats for this age
+                if (showEfficiency && dataByAge[age].length > 0) {
+                    const avgEfficiency = dataByAge[age].reduce((sum, d) => sum + d.y, 0) / dataByAge[age].length;
+                    efficiencyStats[age] = avgEfficiency.toFixed(2);
+                }
+                
+                datasets.push({
+                    label: `${age} días${isRequiredAge ? ' (Edad Requerida)' : ''}`,
+                    data: dataByAge[age],
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: isRequiredAge ? 3 : 2,
+                    pointRadius: isRequiredAge ? 6 : 4,
+                    pointBackgroundColor: color.border,
+                    tension: 0.4
+                });
+            });
+
+            // Add specification line for required age (only if not showing efficiency)
+            if (!showEfficiency && dataByAge[requiredAge] && dataByAge[requiredAge].length > 0) {
+                const xValues = dataByAge[requiredAge].map(d => d.x);
+                datasets.push({
+                    label: `Especificación (${mix.specStrength} PSI)`,
+                    data: [
+                        { x: Math.min(...xValues), y: mix.specStrength },
+                        { x: Math.max(...xValues), y: mix.specStrength }
+                    ],
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderDash: [10, 5],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0
+                });
+            }
+
+            const yAxisLabel = showEfficiency ? 'Eficiencia (PSI/lb)' : 'Resistencia (PSI)';
+            const chartTitle = showEfficiency 
+                ? `Eficiencia del Cemento - ${mix.id}` 
+                : `Evolución de Resistencia - ${mix.id}`;
+
+            evolutionChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: chartTitle,
+                            color: '#e8eaed',
+                            font: { size: 16, weight: '600' }
+                        },
+                        legend: {
+                            labels: {
+                                color: '#e8eaed',
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 25, 45, 0.95)',
+                            titleColor: '#e8eaed',
+                            bodyColor: '#8b92a8',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: (items) => {
+                                    if (items[0] && items[0].raw) {
+                                        const date = new Date(items[0].raw.x);
+                                        return timeScale === 'week' 
+                                            ? items[0].raw.label 
+                                            : date.toLocaleDateString('es-ES');
+                                    }
+                                    return '';
+                                },
+                                label: (item) => {
+                                    const count = item.raw.count || 1;
+                                    if (showEfficiency) {
+                                        const strength = item.raw.originalStrength || 0;
+                                        return [
+                                            `${item.dataset.label}: ${item.parsed.y.toFixed(2)} PSI/lb`,
+                                            `Resistencia Promedio: ${Math.round(strength)} PSI`,
+                                            `Muestras: ${count}`
+                                        ];
+                                    }
+                                    return [
+                                        `${item.dataset.label}: ${Math.round(item.parsed.y)} PSI`,
+                                        `Muestras: ${count}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: timeScale === 'week' ? 'week' : 'day',
+                                displayFormats: {
+                                    day: 'MMM d',
+                                    week: 'MMM d'
+                                },
+                                tooltipFormat: 'MMM d, yyyy'
+                            },
+                            title: {
+                                display: true,
+                                text: timeScale === 'week' ? 'Semana' : 'Fecha',
+                                color: '#8b92a8',
+                                font: { size: 14, weight: '600' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#8b92a8'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yAxisLabel,
+                                color: '#8b92a8',
+                                font: { size: 14, weight: '600' }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#8b92a8'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Show efficiency stats if enabled
+            if (showEfficiency && Object.keys(efficiencyStats).length > 0) {
+                const legendEl = document.getElementById('evolutionChartLegend');
+                const statsEl = document.getElementById('efficiencyStats');
+                
+                let statsHTML = '<div style="display: flex; gap: 1rem; flex-wrap: wrap;">';
+                Object.keys(efficiencyStats).forEach(age => {
+                    statsHTML += `
+                        <div style="padding: 0.5rem 1rem; background: rgba(0, 212, 170, 0.1); border-radius: 8px; border: 1px solid rgba(0, 212, 170, 0.3);">
+                            <strong style="color: #00d4aa;">${age} días:</strong> ${efficiencyStats[age]} PSI/lb
+                        </div>
+                    `;
+                });
+                statsHTML += '</div>';
+                
+                statsEl.innerHTML = statsHTML;
+                legendEl.style.display = 'block';
+            } else {
+                document.getElementById('evolutionChartLegend').style.display = 'none';
+            }
+        }
+
+        // ===== AGE FILTER FUNCTIONS =====
+        let selectedAgesFilter = [];
+
+        function toggleAgeFilter() {
+            const dropdown = document.getElementById('ageFilterDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateAgeCheckboxes(mix) {
+            const container = document.getElementById('ageCheckboxes');
+            if (!mix) return;
+
+            // Get all unique ages from the mix
+            const ages = new Set();
+            mix.tests.forEach(test => {
+                test.ages.forEach(ageData => {
+                    ages.add(ageData.age);
+                });
+            });
+
+            const sortedAges = Array.from(ages).sort((a, b) => a - b);
+            
+            container.innerHTML = '';
+            sortedAges.forEach(age => {
+                const checked = selectedAgesFilter.length === 0 || selectedAgesFilter.includes(age);
+                container.innerHTML += `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                        <input type="checkbox" value="${age}" ${checked ? 'checked' : ''} style="cursor: pointer;">
+                        <span style="color: #e8eaed;">${age} días</span>
+                    </label>
+                `;
+            });
+        }
+
+        function getSelectedAges() {
+            const checkboxes = document.querySelectorAll('#ageCheckboxes input[type="checkbox"]:checked');
+            const ages = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            return ages;
+        }
+
+        function applyAgeFilter() {
+            selectedAgesFilter = getSelectedAges();
+            document.getElementById('ageFilterDropdown').style.display = 'none';
+            updateEvolutionChart();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('ageFilterDropdown');
+            const btn = document.getElementById('ageFilterBtn');
+            if (dropdown && btn && !dropdown.contains(event.target) && !btn.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // ===== AI ANALYSIS =====
+        async function analyzeWithAI() {
+            const aiBtn = document.getElementById('aiBtn');
+            const container = document.getElementById('aiAnalysisContainer');
+            
+            aiBtn.disabled = true;
+            aiBtn.innerHTML = '<span class="loading-spinner"></span> Analizando...';
+            
+            try {
+                const allMixes = getMixes();
+                
+                let mixes;
+                if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                    mixes = allMixes;
+                } else {
+                    mixes = allMixes.filter(m => selectedMixIds.includes(m.id));
+                }
+                
+                // Calculate statistics
+                let totalTests = 0;
+                let passedTests = 0;
+                let allStrengths = [];
+                let strengthsByAge = {};
+                
+                mixes.forEach(mix => {
+                    const requiredAge = mix.requiredAge || 28;
+                    mix.tests.forEach(test => {
+                        test.ages.forEach(ageData => {
+                            if (ageData.age === requiredAge) {
+                                ageData.strengths.forEach(strength => {
+                                    totalTests++;
+                                    allStrengths.push(strength);
+                                    if (strength >= mix.specStrength) passedTests++;
+                                });
+                            }
+                            
+                            if (!strengthsByAge[ageData.age]) {
+                                strengthsByAge[ageData.age] = [];
+                            }
+                            strengthsByAge[ageData.age].push(...ageData.strengths);
+                        });
+                    });
+                });
+                
+                const complianceRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : 0;
+                const avgStrength = allStrengths.length > 0 ? 
+                    Math.round(allStrengths.reduce((a, b) => a + b, 0) / allStrengths.length) : 0;
+                
+                // Calculate standard deviation
+                const variance = allStrengths.length > 1 ? 
+                    allStrengths.reduce((sum, val) => sum + Math.pow(val - avgStrength, 2), 0) / (allStrengths.length - 1) : 0;
+                const stdDev = Math.round(Math.sqrt(variance));
+                
+                // Generate insights based on data
+                const insights = [];
+                
+                // Compliance insight
+                if (complianceRate >= 95) {
+                    insights.push({
+                        title: "✅ Excelente Cumplimiento",
+                        text: `La tasa de cumplimiento es del ${complianceRate}%, superando el estándar del 95%. De ${totalTests} pruebas realizadas, ${passedTests} cumplieron con la resistencia especificada. Esto demuestra un control de calidad consistente y confiable.`
+                    });
+                } else if (complianceRate >= 85) {
+                    insights.push({
+                        title: "⚠️ Cumplimiento Aceptable",
+                        text: `La tasa de cumplimiento es del ${complianceRate}%, ligeramente por debajo del objetivo del 95%. Se recomienda revisar los ${totalTests - passedTests} tests que no cumplieron para identificar patrones y causas potenciales.`
+                    });
+                } else {
+                    insights.push({
+                        title: "🔴 Cumplimiento Crítico",
+                        text: `La tasa de cumplimiento es del ${complianceRate}%, significativamente por debajo del estándar. Se requiere acción inmediata: revisar dosificaciones, procedimientos de mezclado, y calidad de materiales.`
+                    });
+                }
+                
+                // Variability insight
+                const cv = avgStrength > 0 ? ((stdDev / avgStrength) * 100).toFixed(1) : 0;
+                if (cv < 10) {
+                    insights.push({
+                        title: "📊 Baja Variabilidad",
+                        text: `El coeficiente de variación es ${cv}%, indicando un proceso muy controlado. La desviación estándar de ${stdDev} PSI demuestra consistencia en la producción. Resistencia promedio: ${avgStrength} PSI.`
+                    });
+                } else if (cv < 15) {
+                    insights.push({
+                        title: "📊 Variabilidad Moderada",
+                        text: `El coeficiente de variación es ${cv}% con una desviación estándar de ${stdDev} PSI. Aunque está dentro de rangos aceptables, hay oportunidad de mejorar la consistencia del proceso.`
+                    });
+                } else {
+                    insights.push({
+                        title: "📊 Alta Variabilidad",
+                        text: `El coeficiente de variación de ${cv}% (${stdDev} PSI) indica variabilidad significativa. Se recomienda: calibrar equipos, estandarizar procedimientos, y verificar uniformidad de materiales.`
+                    });
+                }
+                
+                // Age progression insight
+                const ages = Object.keys(strengthsByAge).map(Number).sort((a, b) => a - b);
+                if (ages.length >= 2) {
+                    const avgsByAge = ages.map(age => {
+                        const strengths = strengthsByAge[age];
+                        return {
+                            age,
+                            avg: Math.round(strengths.reduce((a, b) => a + b, 0) / strengths.length)
+                        };
+                    });
+                    
+                    const early = avgsByAge[0];
+                    const late = avgsByAge[avgsByAge.length - 1];
+                    const gain = late.avg - early.avg;
+                    const gainPercent = ((gain / early.avg) * 100).toFixed(1);
+                    
+                    insights.push({
+                        title: "📈 Desarrollo de Resistencia",
+                        text: `La resistencia evoluciona de ${early.avg} PSI a ${early.age} días hasta ${late.avg} PSI a ${late.age} días, representando un incremento de ${gain} PSI (${gainPercent}%). ${gainPercent > 40 ? 'Este desarrollo es excelente y típico de concretos bien diseñados.' : 'Se puede optimizar el desarrollo de resistencia con aditivos o ajuste en la dosificación.'}`
+                    });
+                }
+                
+                // Cement efficiency insight
+                if (mixes.length > 0) {
+                    let totalCement = 0;
+                    let total28DayStrength = 0;
+                    let count28 = 0;
+                    
+                    mixes.forEach(mix => {
+                        totalCement += mix.materials.cement || 0;
+                        mix.tests.forEach(test => {
+                            test.ages.forEach(ageData => {
+                                if (ageData.age === 28) {
+                                    ageData.strengths.forEach(s => {
+                                        total28DayStrength += s;
+                                        count28++;
+                                    });
+                                }
+                            });
+                        });
+                    });
+                    
+                    const avgCement = totalCement / mixes.length;
+                    const avg28Strength = count28 > 0 ? total28DayStrength / count28 : 0;
+                    const efficiency = avgCement > 0 ? (avg28Strength / avgCement).toFixed(2) : 0;
+                    
+                    if (efficiency > 0) {
+                        insights.push({
+                            title: "⚡ Eficiencia del Cemento",
+                            text: `La eficiencia actual es ${efficiency} PSI/lb de cemento. ${efficiency > 7 ? 'Excelente eficiencia, indicando buen diseño de mezcla y calidad de materiales.' : efficiency > 6 ? 'Eficiencia buena, con potencial de optimización mediante uso de aditivos o ajuste de relación agua/cemento.' : 'Eficiencia moderada. Considere revisar: calidad del cemento, relación agua/cemento, y uso de materiales cementantes suplementarios (SCM).'}`
+                        });
+                    }
+                }
+                
+                // Recommendations
+                insights.push({
+                    title: "💡 Recomendaciones",
+                    text: `Basado en el análisis: ${complianceRate < 95 ? '1) Revisar y documentar tests fallidos. ' : ''}2) Mantener registros detallados de condiciones ambientales y procedimientos. 3) Realizar análisis de tendencias mensualmente. 4) Calibrar equipos de prueba regularmente. 5) Implementar muestreo representativo.`
+                });
+
+                let analysisHTML = `
+                    <div class="ai-analysis">
+                        <h4>🤖 Análisis Inteligente de Calidad</h4>
+                `;
+
+                insights.forEach(insight => {
+                    analysisHTML += `
+                        <div class="insight">
+                            <div class="insight-title">${insight.title}</div>
+                            <div class="insight-text">${insight.text}</div>
+                        </div>
+                    `;
+                });
+
+                analysisHTML += `</div>`;
+                container.innerHTML = analysisHTML;
+
+            } catch (error) {
+                console.error('Error in AI analysis:', error);
+                container.innerHTML = `
+                    <div class="ai-analysis" style="border-color: rgba(255, 71, 87, 0.3); background: rgba(255, 71, 87, 0.1);">
+                        <h4 style="color: #ff4757;">⚠️ Error en Análisis</h4>
+                        <div class="insight">
+                            <div class="insight-title">Error</div>
+                            <div class="insight-text">
+                                No se pudo completar el análisis. Por favor, intente nuevamente.
+                                <br><br>
+                                <strong>Detalle:</strong> ${error.message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                aiBtn.disabled = false;
+                aiBtn.innerHTML = '<span>🤖</span> Análisis AI';
+            }
+        }
+
+        // ===== EVOLUTION AI ANALYSIS =====
+        async function analyzeEvolutionWithAI() {
+            const aiBtn = document.getElementById('evolutionAiBtn');
+            const container = document.getElementById('evolutionAiAnalysisContainer');
+            
+            const mixId = document.getElementById('mixEvolutionSelector').value;
+            if (!mixId) {
+                alert('Por favor seleccione una mezcla primero');
+                return;
+            }
+            
+            aiBtn.disabled = true;
+            aiBtn.innerHTML = '<span class="loading-spinner"></span> Analizando...';
+            
+            try {
+                const mixes = getMixes();
+                const mix = mixes.find(m => m.id === mixId);
+                if (!mix) return;
+                
+                const showEfficiency = document.getElementById('showCementEfficiency').checked;
+                const selectedAges = getSelectedAges();
+                const cementContent = mix.materials.cement || 1;
+                
+                // Collect data for analysis
+                const dataByAge = {};
+                const dataByDate = {};
+                
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        const age = ageData.age;
+                        
+                        // Filter by selected ages
+                        if (selectedAges.length > 0 && !selectedAges.includes(age)) {
+                            return;
+                        }
+                        
+                        if (!dataByAge[age]) {
+                            dataByAge[age] = [];
+                        }
+                        dataByAge[age].push(...ageData.strengths);
+                        
+                        // Track by date
+                        if (!dataByDate[test.date]) {
+                            dataByDate[test.date] = {};
+                        }
+                        if (!dataByDate[test.date][age]) {
+                            dataByDate[test.date][age] = [];
+                        }
+                        dataByDate[test.date][age].push(...ageData.strengths);
+                    });
+                });
+                
+                // Calculate statistics by age
+                const ages = Object.keys(dataByAge).map(Number).sort((a, b) => a - b);
+                const ageStats = ages.map(age => {
+                    const strengths = dataByAge[age];
+                    const avg = strengths.reduce((a, b) => a + b, 0) / strengths.length;
+                    const max = Math.max(...strengths);
+                    const min = Math.min(...strengths);
+                    const variance = strengths.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / strengths.length;
+                    const stdDev = Math.sqrt(variance);
+                    const cv = (stdDev / avg) * 100;
+                    const efficiency = avg / cementContent;
+                    
+                    return { age, avg, max, min, stdDev, cv, efficiency, count: strengths.length };
+                });
+                
+                // Analyze trends over time
+                const dates = Object.keys(dataByDate).sort();
+                const hasTrend = dates.length >= 3;
+                
+                // Generate insights
+                const insights = [];
+                
+                // Mix overview
+                insights.push({
+                    title: `📋 Resumen de Mezcla: ${mix.id}`,
+                    text: `Proyecto: ${mix.project}. Resistencia especificada: ${mix.specStrength} PSI a ${mix.requiredAge || 28} días. Contenido de cemento: ${Math.round(cementContent)} lb/yd³. Se analizaron ${mix.tests.length} pruebas en ${ages.length} edades diferentes (${ages.join(', ')} días).`
+                });
+                
+                // Development progression
+                if (ages.length >= 2) {
+                    const early = ageStats[0];
+                    const late = ageStats[ageStats.length - 1];
+                    const gain = late.avg - early.avg;
+                    const gainPercent = ((gain / early.avg) * 100).toFixed(1);
+                    const gainRate = (gain / (late.age - early.age)).toFixed(1);
+                    
+                    insights.push({
+                        title: "📈 Desarrollo de Resistencia",
+                        text: `La resistencia evoluciona de ${Math.round(early.avg)} PSI (${early.age} días) a ${Math.round(late.avg)} PSI (${late.age} días), ganando ${Math.round(gain)} PSI (${gainPercent}%). Tasa de ganancia: ${gainRate} PSI/día. ${gainPercent > 40 ? 'Desarrollo excelente típico de concreto bien diseñado.' : gainPercent > 25 ? 'Desarrollo adecuado, pero podría optimizarse con ajustes.' : 'Desarrollo lento, considere revisar relación agua/cemento y calidad de materiales.'}`
+                    });
+                }
+                
+                // Consistency analysis by age
+                ageStats.forEach(stat => {
+                    const isRequiredAge = stat.age === (mix.requiredAge || 28);
+                    const meetsSpec = stat.avg >= mix.specStrength;
+                    const passRate = dataByAge[stat.age].filter(s => s >= mix.specStrength).length / stat.count * 100;
+                    
+                    let consistency = stat.cv < 10 ? 'excelente' : stat.cv < 15 ? 'buena' : 'mejorable';
+                    
+                    insights.push({
+                        title: `${isRequiredAge ? '🎯' : '📊'} Edad ${stat.age} días${isRequiredAge ? ' (Requerida)' : ''}`,
+                        text: `Resistencia promedio: ${Math.round(stat.avg)} PSI (rango: ${Math.round(stat.min)}-${Math.round(stat.max)} PSI). ${isRequiredAge && !meetsSpec ? '⚠️ NO cumple especificación.' : isRequiredAge && meetsSpec ? '✅ Cumple especificación.' : ''} Tasa de cumplimiento: ${passRate.toFixed(1)}%. Consistencia ${consistency} (CV=${stat.cv.toFixed(1)}%, σ=${Math.round(stat.stdDev)} PSI). ${stat.count} muestras analizadas.`
+                    });
+                });
+                
+                // Efficiency analysis
+                if (showEfficiency) {
+                    const efficiencies = ageStats.map(s => s.efficiency);
+                    const avgEff = efficiencies.reduce((a, b) => a + b, 0) / efficiencies.length;
+                    const maxEff = Math.max(...efficiencies);
+                    const ageWithMaxEff = ageStats.find(s => s.efficiency === maxEff).age;
+                    
+                    insights.push({
+                        title: "⚡ Eficiencia del Cemento",
+                        text: `Eficiencia promedio: ${avgEff.toFixed(2)} PSI/lb. Pico de eficiencia: ${maxEff.toFixed(2)} PSI/lb a ${ageWithMaxEff} días. ${avgEff > 7 ? 'Excelente eficiencia, mezcla bien optimizada.' : avgEff > 6 ? 'Buena eficiencia con margen de mejora mediante aditivos.' : 'Eficiencia moderada. Considere: reducir relación a/c, usar puzolanas, o cambiar tipo de cemento.'}`
+                    });
+                }
+                
+                // Time trend analysis
+                if (hasTrend) {
+                    const firstDate = dates[0];
+                    const lastDate = dates[dates.length - 1];
+                    const middleIdx = Math.floor(dates.length / 2);
+                    
+                    // Check for improvements or deteriorations over time
+                    let trendInsight = '';
+                    ages.forEach(age => {
+                        const earlyTests = dates.slice(0, middleIdx).filter(d => dataByDate[d][age]).flatMap(d => dataByDate[d][age]);
+                        const recentTests = dates.slice(middleIdx).filter(d => dataByDate[d][age]).flatMap(d => dataByDate[d][age]);
+                        
+                        if (earlyTests.length > 0 && recentTests.length > 0) {
+                            const earlyAvg = earlyTests.reduce((a, b) => a + b, 0) / earlyTests.length;
+                            const recentAvg = recentTests.reduce((a, b) => a + b, 0) / recentTests.length;
+                            const change = recentAvg - earlyAvg;
+                            const changePercent = ((change / earlyAvg) * 100).toFixed(1);
+                            
+                            if (Math.abs(change) > 100) {
+                                trendInsight += `${age} días: ${change > 0 ? '📈 Mejora' : '📉 Disminución'} de ${Math.abs(Math.round(change))} PSI (${Math.abs(changePercent)}%) entre periodo inicial y reciente. `;
+                            }
+                        }
+                    });
+                    
+                    if (trendInsight) {
+                        insights.push({
+                            title: "📅 Tendencias Temporales",
+                            text: `Análisis del periodo ${firstDate} a ${lastDate}: ${trendInsight || 'Resistencias estables sin cambios significativos.'}`
+                        });
+                    }
+                }
+                
+                // Recommendations
+                const requiredAgeStat = ageStats.find(s => s.age === (mix.requiredAge || 28));
+                let recommendations = [];
+                
+                if (requiredAgeStat) {
+                    if (requiredAgeStat.avg < mix.specStrength) {
+                        recommendations.push('Aumentar contenido de cemento o reducir relación agua/cemento');
+                    }
+                    if (requiredAgeStat.cv > 15) {
+                        recommendations.push('Mejorar control de dosificación y uniformidad de mezclado');
+                    }
+                }
+                
+                if (ages.length === 1) {
+                    recommendations.push('Realizar pruebas en múltiples edades (7, 14, 28 días) para monitorear desarrollo');
+                }
+                
+                if (mix.tests.length < 5) {
+                    recommendations.push('Aumentar frecuencia de muestreo para mejor análisis estadístico');
+                }
+                
+                if (recommendations.length > 0) {
+                    insights.push({
+                        title: "💡 Recomendaciones",
+                        text: recommendations.map((r, i) => `${i + 1}) ${r}`).join('. ') + '.'
+                    });
+                }
+
+                let analysisHTML = `
+                    <div class="ai-analysis" style="margin-top: 1rem;">
+                        <h4>🤖 Análisis Inteligente de Evolución</h4>
+                `;
+
+                insights.forEach(insight => {
+                    analysisHTML += `
+                        <div class="insight">
+                            <div class="insight-title">${insight.title}</div>
+                            <div class="insight-text">${insight.text}</div>
+                        </div>
+                    `;
+                });
+
+                analysisHTML += `</div>`;
+                container.innerHTML = analysisHTML;
+
+            } catch (error) {
+                console.error('Error in evolution AI analysis:', error);
+                container.innerHTML = `
+                    <div class="ai-analysis" style="margin-top: 1rem; border-color: rgba(255, 71, 87, 0.3); background: rgba(255, 71, 87, 0.1);">
+                        <h4 style="color: #ff4757;">⚠️ Error en Análisis</h4>
+                        <div class="insight">
+                            <div class="insight-title">Error</div>
+                            <div class="insight-text">
+                                No se pudo completar el análisis. Por favor, intente nuevamente.
+                                <br><br>
+                                <strong>Detalle:</strong> ${error.message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                aiBtn.disabled = false;
+                aiBtn.innerHTML = '<span>🤖</span> Análisis AI';
+            }
+        }
+
+        // ===== EVOLUTION REPORT GENERATION =====
+        async function generateEvolutionReport() {
+            try {
+                const mixId = document.getElementById('mixEvolutionSelector').value;
+                if (!mixId) {
+                    alert('Por favor seleccione una mezcla primero');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const mixes = getMixes();
+                const mix = mixes.find(m => m.id === mixId);
+                if (!mix) return;
+                
+                const timeScale = document.getElementById('evolutionTimeScale').value;
+                const showEfficiency = document.getElementById('showCementEfficiency').checked;
+                const selectedAges = getSelectedAges();
+                
+                let yPos = 20;
+                const pageHeight = pdf.internal.pageSize.height;
+                const pageWidth = pdf.internal.pageSize.width;
+                const margin = 20;
+                
+                function checkNewPage(heightNeeded) {
+                    if (yPos + heightNeeded > pageHeight - margin) {
+                        pdf.addPage();
+                        yPos = 20;
+                        return true;
+                    }
+                    return false;
+                }
+                
+                // Add logo if available
+                const logo = getCompanyLogo();
+                if (logo) {
+                    try {
+                        pdf.addImage(logo, 'PNG', margin, yPos, 20, 20);
+                        yPos += 25;
+                    } catch (error) {
+                        console.error('Error adding logo:', error);
+                    }
+                }
+                
+                // Title
+                pdf.setFontSize(20);
+                pdf.setTextColor(0, 212, 170);
+                pdf.text('Reporte de Evolución de Resistencia', margin, yPos);
+                yPos += 10;
+                
+                // Company and date
+                pdf.setFontSize(12);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(getCompanyName(), margin, yPos);
+                yPos += 6;
+                pdf.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, margin, yPos);
+                yPos += 12;
+                
+                // Mix details
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Información de la Mezcla', margin, yPos);
+                yPos += 8;
+                
+                pdf.setFontSize(10);
+                pdf.setTextColor(60, 60, 60);
+                pdf.text(`ID: ${mix.id}`, margin + 5, yPos);
+                yPos += 5;
+                pdf.text(`Proyecto: ${mix.project}`, margin + 5, yPos);
+                yPos += 5;
+                pdf.text(`Resistencia Especificada: ${mix.specStrength} PSI`, margin + 5, yPos);
+                yPos += 5;
+                pdf.text(`Edad Requerida: ${mix.requiredAge || 28} días`, margin + 5, yPos);
+                yPos += 5;
+                pdf.text(`Escala de Tiempo: ${timeScale === 'week' ? 'Por Semana' : 'Por Fecha'}`, margin + 5, yPos);
+                yPos += 5;
+                if (selectedAges.length > 0) {
+                    pdf.text(`Edades Filtradas: ${selectedAges.join(', ')} días`, margin + 5, yPos);
+                    yPos += 5;
+                }
+                if (showEfficiency) {
+                    pdf.text(`Modo: Eficiencia del Cemento`, margin + 5, yPos);
+                    yPos += 5;
+                }
+                yPos += 10;
+                
+                // Capture chart
+                checkNewPage(100);
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Gráfica de Evolución', margin, yPos);
+                yPos += 10;
+                
+                try {
+                    const chartCanvas = document.getElementById('evolutionChart');
+                    const chartImage = await html2canvas(chartCanvas, {
+                        backgroundColor: '#ffffff',
+                        scale: 2
+                    });
+                    const chartDataURL = chartImage.toDataURL('image/png');
+                    
+                    const chartWidth = pageWidth - (2 * margin);
+                    const chartHeight = 90;
+                    
+                    pdf.addImage(chartDataURL, 'PNG', margin, yPos, chartWidth, chartHeight);
+                    yPos += chartHeight + 10;
+                } catch (error) {
+                    console.error('Error capturing chart:', error);
+                }
+                
+                // Prepare detailed data table
+                checkNewPage(80);
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Datos Detallados', margin, yPos);
+                yPos += 10;
+                
+                // Collect and organize data
+                const dataByAge = {};
+                const cementContent = mix.materials.cement || 1;
+                
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        const age = ageData.age;
+                        
+                        // Filter by selected ages
+                        if (selectedAges.length > 0 && !selectedAges.includes(age)) {
+                            return;
+                        }
+                        
+                        if (!dataByAge[age]) {
+                            dataByAge[age] = {
+                                tests: [],
+                                allStrengths: []
+                            };
+                        }
+                        
+                        dataByAge[age].tests.push({
+                            date: test.date,
+                            strengths: ageData.strengths,
+                            efficiency: ageData.strengths.map(s => (s / cementContent).toFixed(2))
+                        });
+                        dataByAge[age].allStrengths.push(...ageData.strengths);
+                    });
+                });
+                
+                // Sort ages
+                const ages = Object.keys(dataByAge).map(Number).sort((a, b) => a - b);
+                
+                // Create table for each age
+                ages.forEach(age => {
+                    checkNewPage(50);
+                    
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(0, 119, 255);
+                    pdf.text(`Edad: ${age} días`, margin, yPos);
+                    yPos += 7;
+                    
+                    // Calculate average
+                    const allStrengths = dataByAge[age].allStrengths;
+                    const avgStrength = Math.round(allStrengths.reduce((a, b) => a + b, 0) / allStrengths.length);
+                    const avgEfficiency = (avgStrength / cementContent).toFixed(2);
+                    
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(60, 60, 60);
+                    
+                    // Table header
+                    pdf.setFillColor(240, 240, 240);
+                    pdf.rect(margin, yPos, pageWidth - 2 * margin, 7, 'F');
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFontSize(9);
+                    pdf.text('Fecha', margin + 2, yPos + 5);
+                    pdf.text('Resistencias (PSI)', margin + 35, yPos + 5);
+                    if (showEfficiency) {
+                        pdf.text('Eficiencia (PSI/lb)', margin + 110, yPos + 5);
+                    }
+                    yPos += 9;
+                    
+                    // Table rows
+                    pdf.setFontSize(8);
+                    pdf.setTextColor(60, 60, 60);
+                    dataByAge[age].tests.forEach(test => {
+                        checkNewPage(8);
+                        
+                        const strengthsText = test.strengths.join(', ');
+                        pdf.text(test.date, margin + 2, yPos);
+                        pdf.text(strengthsText, margin + 35, yPos);
+                        if (showEfficiency) {
+                            pdf.text(test.efficiency.join(', '), margin + 110, yPos);
+                        }
+                        yPos += 6;
+                    });
+                    
+                    // Average row
+                    yPos += 2;
+                    pdf.setFillColor(255, 248, 220);
+                    pdf.rect(margin, yPos - 4, pageWidth - 2 * margin, 7, 'F');
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('PROMEDIO', margin + 2, yPos);
+                    pdf.text(`${avgStrength} PSI`, margin + 35, yPos);
+                    if (showEfficiency) {
+                        pdf.text(`${avgEfficiency} PSI/lb`, margin + 110, yPos);
+                    }
+                    pdf.setFont(undefined, 'normal');
+                    yPos += 10;
+                });
+                
+                // Summary statistics
+                if (ages.length > 0) {
+                    checkNewPage(40);
+                    pdf.setFontSize(14);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.text('Resumen Estadístico', margin, yPos);
+                    yPos += 10;
+                    
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(60, 60, 60);
+                    
+                    ages.forEach(age => {
+                        checkNewPage(6);
+                        const allStrengths = dataByAge[age].allStrengths;
+                        const avg = Math.round(allStrengths.reduce((a, b) => a + b, 0) / allStrengths.length);
+                        const max = Math.max(...allStrengths);
+                        const min = Math.min(...allStrengths);
+                        const count = allStrengths.length;
+                        
+                        pdf.text(`${age} días: Promedio=${avg} PSI, Máx=${max} PSI, Mín=${min} PSI, Muestras=${count}`, margin + 5, yPos);
+                        yPos += 6;
+                    });
+                }
+                
+                // Footer
+                checkNewPage(15);
+                yPos = pageHeight - 15;
+                pdf.setFontSize(8);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text(`Generado por ${getCompanyName()} - ${new Date().toLocaleString('es-ES')}`, margin, yPos);
+                
+                // Save PDF
+                const fileName = `Reporte_Evolucion_${mix.id}_${new Date().toISOString().split('T')[0]}.pdf`;
+                pdf.save(fileName);
+                
+            } catch (error) {
+                console.error('Error generating evolution report:', error);
+                alert('Error al generar el reporte: ' + error.message);
+            }
+        }
+
+        // ===== PDF GENERATION =====
+        async function generatePDFReport() {
+            try {
+                // Verificar que jsPDF esté disponible
+                if (!window.jspdf) {
+                    alert('Error: La librería jsPDF no está cargada. Por favor recarga la página.');
+                    console.error('jsPDF not loaded');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                if (!jsPDF) {
+                    alert('Error: No se pudo inicializar jsPDF.');
+                    return;
+                }
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const allMixes = getMixes();
+                
+                if (allMixes.length === 0) {
+                    alert('No hay mezclas para generar el reporte. Por favor agregue al menos una mezcla.');
+                    return;
+                }
+                
+                let mixes;
+                if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                    mixes = allMixes;
+                } else {
+                    mixes = allMixes.filter(m => selectedMixIds.includes(m.id));
+                }
+                
+                if (mixes.length === 0) {
+                    alert('No hay mezclas seleccionadas para el reporte.');
+                    return;
+                }
+                
+                let yPos = 20;
+                const pageHeight = pdf.internal.pageSize.height;
+                const pageWidth = pdf.internal.pageSize.width;
+                const margin = 20;
+                
+                function checkNewPage(heightNeeded) {
+                    if (yPos + heightNeeded > pageHeight - margin) {
+                        pdf.addPage();
+                        yPos = 20;
+                        return true;
+                    }
+                    return false;
+                }
+                
+                // Add logo if available
+                const logo = getCompanyLogo();
+                if (logo) {
+                    try {
+                        pdf.addImage(logo, 'PNG', margin, yPos, 20, 20);
+                        yPos += 25;
+                    } catch (error) {
+                        console.error('Error adding logo:', error);
+                    }
+                }
+                
+                // Title
+                pdf.setFontSize(20);
+                pdf.setTextColor(0, 212, 170);
+                pdf.text('Reporte de Control de Calidad', margin, yPos);
+                yPos += 10;
+                
+                // Company and date
+                pdf.setFontSize(12);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(getCompanyName(), margin, yPos);
+                yPos += 6;
+                pdf.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, margin, yPos);
+                yPos += 12;
+                
+                // Summary
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Resumen Ejecutivo', margin, yPos);
+                yPos += 8;
+                
+                let totalTests = 0;
+                let passedTests = 0;
+                let totalCement = 0;
+                let totalStrength28 = 0;
+                let strength28Count = 0;
+                
+                mixes.forEach(mix => {
+                    totalCement += mix.materials.cement || 0;
+                    const requiredAge = mix.requiredAge || 28;
+                    
+                    mix.tests.forEach(test => {
+                        test.ages.forEach(ageData => {
+                            // Only count tests at the required age for compliance
+                            if (ageData.age === requiredAge) {
+                                ageData.strengths.forEach(strength => {
+                                    totalTests++;
+                                    if (strength >= mix.specStrength) passedTests++;
+                                });
+                            }
+                            
+                            // Separately track 28-day data for cement efficiency
+                            if (ageData.age === 28) {
+                                ageData.strengths.forEach(strength => {
+                                    totalStrength28 += strength;
+                                    strength28Count++;
+                                });
+                            }
+                        });
+                    });
+                });
+                
+                const complianceRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : 0;
+                const avgCement = mixes.length > 0 ? totalCement / mixes.length : 0;
+                const avg28DayStrength = strength28Count > 0 ? totalStrength28 / strength28Count : 0;
+                const cementEfficiency = avgCement > 0 ? (avg28DayStrength / avgCement).toFixed(2) : 0;
+                
+                pdf.setFontSize(10);
+                pdf.setTextColor(60, 60, 60);
+                pdf.text(`Total de Mezclas: ${mixes.length}`, margin + 5, yPos);
+                yPos += 6;
+                pdf.text(`Total de Pruebas: ${totalTests}`, margin + 5, yPos);
+                yPos += 6;
+                pdf.text(`Tasa de Cumplimiento: ${complianceRate}%`, margin + 5, yPos);
+                yPos += 6;
+                pdf.text(`Eficiencia del Cemento: ${cementEfficiency} PSI/lb @ 28 días`, margin + 5, yPos);
+                yPos += 12;
+                
+                // Capture chart
+                checkNewPage(100);
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Gráfica de Evolución', margin, yPos);
+                yPos += 10;
+                
+                try {
+                    if (!window.html2canvas) {
+                        console.warn('html2canvas not available, skipping chart capture');
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(150, 150, 150);
+                        pdf.text('(Gráfica no disponible)', margin + 5, yPos);
+                        yPos += 10;
+                    } else {
+                        const chartCanvas = document.getElementById('strengthChart');
+                        if (chartCanvas) {
+                            const chartImage = await html2canvas(chartCanvas, {
+                                backgroundColor: '#ffffff',
+                                scale: 2,
+                                logging: false,
+                                useCORS: true
+                            });
+                            const chartDataURL = chartImage.toDataURL('image/png');
+                            
+                            const chartWidth = pageWidth - (2 * margin);
+                            const chartHeight = 80;
+                            
+                            pdf.addImage(chartDataURL, 'PNG', margin, yPos, chartWidth, chartHeight);
+                            yPos += chartHeight + 10;
+                        } else {
+                            console.warn('Chart canvas not found');
+                            pdf.setFontSize(10);
+                            pdf.setTextColor(150, 150, 150);
+                            pdf.text('(Gráfica no disponible)', margin + 5, yPos);
+                            yPos += 10;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error capturing chart:', error);
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(150, 150, 150);
+                    pdf.text('(Error al capturar gráfica)', margin + 5, yPos);
+                    yPos += 10;
+                }
+                
+                // Mix details
+                mixes.forEach((mix, index) => {
+                    checkNewPage(60);
+                    
+                    pdf.setFontSize(14);
+                    pdf.setTextColor(0, 119, 255);
+                    pdf.text(`Mezcla ${index + 1}: ${mix.id}`, margin, yPos);
+                    yPos += 8;
+                    
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(60, 60, 60);
+                    pdf.text(`Proyecto: ${mix.project}`, margin + 5, yPos);
+                    yPos += 5;
+                    pdf.text(`Resistencia Especificada: ${mix.specStrength} PSI`, margin + 5, yPos);
+                    yPos += 5;
+                    
+                    // Cement efficiency for this mix
+                    let mixStrength28 = 0;
+                    let mixCount28 = 0;
+                    mix.tests.forEach(test => {
+                        test.ages.forEach(ageData => {
+                            if (ageData.age === 28) {
+                                ageData.strengths.forEach(s => {
+                                    mixStrength28 += s;
+                                    mixCount28++;
+                                });
+                            }
+                        });
+                    });
+                    const mixAvg28 = mixCount28 > 0 ? mixStrength28 / mixCount28 : 0;
+                    const mixEff = mix.materials.cement > 0 ? (mixAvg28 / mix.materials.cement).toFixed(2) : 0;
+                    
+                    pdf.text(`Cemento: ${mix.materials.cement} lb/yd³ (Eficiencia: ${mixEff} PSI/lb)`, margin + 5, yPos);
+                    yPos += 8;
+                    
+                    // Tests
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.text('Resultados:', margin + 5, yPos);
+                    yPos += 6;
+                    
+                    mix.tests.forEach((test, testIndex) => {
+                        checkNewPage(20);
+                        
+                        pdf.setFontSize(9);
+                        pdf.setTextColor(100, 100, 100);
+                        pdf.text(`Prueba ${testIndex + 1} - ${test.date} - Slump: ${test.slump}"`, margin + 10, yPos);
+                        yPos += 5;
+                        
+                        test.ages.forEach(ageData => {
+                            const avgStrength = Math.round(ageData.strengths.reduce((a, b) => a + b, 0) / ageData.strengths.length);
+                            const status = avgStrength >= mix.specStrength ? '✓' : '✗';
+                            const statusColor = avgStrength >= mix.specStrength ? [0, 212, 170] : [255, 71, 87];
+                            
+                            pdf.setTextColor(...statusColor);
+                            pdf.text(`${status} ${ageData.age} días: ${avgStrength} PSI`, margin + 15, yPos);
+                            yPos += 5;
+                        });
+                    });
+                    
+                    yPos += 8;
+                });
+                
+                // AI analysis if available
+                const aiContainer = document.getElementById('aiAnalysisContainer');
+                if (aiContainer.innerHTML.trim()) {
+                    checkNewPage(60);
+                    
+                    pdf.setFontSize(14);
+                    pdf.setTextColor(139, 92, 246);
+                    pdf.text('Análisis Inteligente', margin, yPos);
+                    yPos += 8;
+                    
+                    const insights = aiContainer.querySelectorAll('.insight');
+                    insights.forEach(insight => {
+                        checkNewPage(25);
+                        
+                        const title = insight.querySelector('.insight-title').textContent;
+                        const text = insight.querySelector('.insight-text').textContent;
+                        
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(0, 0, 0);
+                        pdf.text(title, margin + 5, yPos);
+                        yPos += 5;
+                        
+                        pdf.setFontSize(9);
+                        pdf.setTextColor(100, 100, 100);
+                        const textLines = pdf.splitTextToSize(text, pageWidth - 2 * margin - 10);
+                        pdf.text(textLines, margin + 5, yPos);
+                        yPos += textLines.length * 5 + 3;
+                    });
+                }
+                
+                // Save
+                const isAllMixes = selectedMixIds.includes('all') || selectedMixIds.length === 0 || selectedMixIds.length === allMixes.length;
+                const fileName = isAllMixes
+                    ? `Reporte_Completo_${new Date().toISOString().split('T')[0]}.pdf`
+                    : `Reporte_${selectedMixIds.length}Mezclas_${new Date().toISOString().split('T')[0]}.pdf`;
+                
+                pdf.save(fileName);
+                
+                alert('✅ Reporte PDF generado exitosamente');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                console.error('Stack trace:', error.stack);
+                alert('❌ Error al generar el PDF: ' + error.message + '\n\nRevisa la consola para más detalles.');
+            }
+        }
+
+        // ===== MIX LIST RENDERING =====
+        function renderMixList() {
+            const mixes = getMixes();
+            const container = document.getElementById('mixListContainer');
+
+            if (mixes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3>No hay mezclas registradas</h3>
+                        <p>Comienza agregando tu primera mezcla de concreto</p>
+                        <button class="btn-primary" onclick="openAddMixModal()">
+                            <span>➕</span> Nueva Mezcla
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Proyecto</th>
+                            <th>Resistencia Esp.</th>
+                            <th>Pruebas</th>
+                            <th>Cumplimiento</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            mixes.forEach(mix => {
+                let totalTests = 0;
+                let passedTests = 0;
+                const requiredAge = mix.requiredAge || 28;
+
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        // Only count tests at required age
+                        if (ageData.age === requiredAge) {
+                            ageData.strengths.forEach(strength => {
+                                totalTests++;
+                                if (strength >= mix.specStrength) {
+                                    passedTests++;
+                                }
+                            });
+                        }
+                    });
+                });
+
+                const complianceRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+                let statusClass = 'success';
+                let statusText = 'Cumple';
+                
+                if (complianceRate < 95) {
+                    statusClass = 'warning';
+                    statusText = 'Revisar';
+                }
+                if (complianceRate < 85) {
+                    statusClass = 'danger';
+                    statusText = 'No Cumple';
+                }
+
+                tableHTML += `
+                    <tr>
+                        <td><strong>${mix.id}</strong></td>
+                        <td>${mix.project}</td>
+                        <td>${mix.specStrength} PSI</td>
+                        <td>${totalTests}</td>
+                        <td>${complianceRate.toFixed(1)}%</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="icon-btn" onclick="viewMixDetail('${mix.id}')" title="Ver detalles">
+                                    👁️
+                                </button>
+                                <button class="icon-btn" onclick="editMix('${mix.id}')" title="Editar">
+                                    ✏️
+                                </button>
+                                <button class="icon-btn" onclick="deleteMix('${mix.id}')" title="Eliminar">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // ===== MIX DETAIL VIEW =====
+        function viewMixDetail(mixId) {
+            const mixes = getMixes();
+            const mix = mixes.find(m => m.id === mixId);
+            if (!mix) return;
+
+            document.getElementById('detailMixId').textContent = `${mix.id} - ${mix.project}`;
+
+            let detailHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>ID de Mezcla</label>
+                        <div class="value">${mix.id}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Proyecto</label>
+                        <div class="value">${mix.project}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Contratista</label>
+                        <div class="value">${mix.contractor || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Planta</label>
+                        <div class="value">${mix.plant || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Resistencia Especificada</label>
+                        <div class="value">${mix.specStrength} PSI</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Gerente QC</label>
+                        <div class="value">${mix.qcManager || 'N/A'}</div>
+                    </div>
+                </div>
+            `;
+
+            if (mix.description) {
+                detailHTML += `
+                    <div class="detail-item" style="margin-bottom: 2rem;">
+                        <label>Descripción</label>
+                        <div class="value">${mix.description}</div>
+                    </div>
+                `;
+            }
+
+            detailHTML += `
+                <h3 style="color: #00d4aa; margin-bottom: 1rem;">Materiales</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Cemento</label>
+                        <div class="value">${mix.materials.cement} lb/yd³</div>
+                        <div style="font-size: 0.85rem; color: #8b92a8; margin-top: 0.25rem;">${mix.materials.cementSupplier || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Agregado Grueso</label>
+                        <div class="value">${mix.materials.coarseAgg} lb/yd³</div>
+                        <div style="font-size: 0.85rem; color: #8b92a8; margin-top: 0.25rem;">${mix.materials.coarseAggSupplier || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Arena Manufacturada</label>
+                        <div class="value">${mix.materials.manSand} lb/yd³</div>
+                        <div style="font-size: 0.85rem; color: #8b92a8; margin-top: 0.25rem;">${mix.materials.manSandSupplier || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Arena Natural</label>
+                        <div class="value">${mix.materials.natSand} lb/yd³</div>
+                        <div style="font-size: 0.85rem; color: #8b92a8; margin-top: 0.25rem;">${mix.materials.natSandSupplier || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Agua</label>
+                        <div class="value">${mix.materials.water} gal/yd³</div>
+                    </div>
+                </div>
+            `;
+
+            detailHTML += `
+                <div class="test-results">
+                    <h3 style="color: #00d4aa; margin-bottom: 1rem;">Resultados de Pruebas</h3>
+            `;
+
+            mix.tests.forEach((test, index) => {
+                detailHTML += `
+                    <div class="test-card">
+                        <div class="test-header">
+                            <h4>Prueba #${index + 1}</h4>
+                            <span style="color: #8b92a8; font-size: 0.9rem;">
+                                ${test.date} | Slump: ${test.slump}"
+                            </span>
+                        </div>
+                        <div class="age-results">
+                `;
+
+                test.ages.forEach(ageData => {
+                    const avgStrength = Math.round(ageData.strengths.reduce((a, b) => a + b, 0) / ageData.strengths.length);
+                    const status = avgStrength >= mix.specStrength ? '✓' : '✗';
+                    const statusColor = avgStrength >= mix.specStrength ? '#00d4aa' : '#ff4757';
+
+                    detailHTML += `
+                        <div class="age-item">
+                            <div class="age">${ageData.age} días</div>
+                            <div class="strength" style="color: ${statusColor};">
+                                ${status} ${avgStrength} PSI
+                            </div>
+                            <div style="font-size: 0.75rem; color: #8b92a8; margin-top: 0.25rem;">
+                                ${ageData.strengths.join(', ')} PSI
+                            </div>
+                        </div>
+                    `;
+                });
+
+                detailHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            detailHTML += `</div>`;
+
+            document.getElementById('detailContent').innerHTML = detailHTML;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        // ===== MIX EDIT =====
+        function editMix(mixId) {
+            const mixes = getMixes();
+            const mix = mixes.find(m => m.id === mixId);
+            if (!mix) return;
+
+            document.getElementById('mixId').value = mix.id;
+            document.getElementById('project').value = mix.project;
+            document.getElementById('contractor').value = mix.contractor || '';
+            document.getElementById('plant').value = mix.plant || '';
+            document.getElementById('description').value = mix.description || '';
+            document.getElementById('specStrength').value = mix.specStrength;
+            document.getElementById('requiredAge').value = mix.requiredAge || 28;
+            
+            document.getElementById('cement').value = mix.materials.cement || '';
+            document.getElementById('cementSupplier').value = mix.materials.cementSupplier || '';
+            document.getElementById('coarseAgg').value = mix.materials.coarseAgg || '';
+            document.getElementById('coarseAggSupplier').value = mix.materials.coarseAggSupplier || '';
+            document.getElementById('manSand').value = mix.materials.manSand || '';
+            document.getElementById('manSandSupplier').value = mix.materials.manSandSupplier || '';
+            document.getElementById('natSand').value = mix.materials.natSand || '';
+            document.getElementById('natSandSupplier').value = mix.materials.natSandSupplier || '';
+            document.getElementById('water').value = mix.materials.water || '';
+            document.getElementById('qcManager').value = mix.qcManager || '';
+
+            document.getElementById('testsContainer').innerHTML = '';
+            testRowCounter = 0;
+
+            mix.tests.forEach(test => {
+                addTestRow();
+                const testRow = document.querySelector('#testsContainer > .form-section:last-child');
+                testRow.querySelector('.test-date').value = test.date;
+                testRow.querySelector('.test-slump').value = test.slump;
+
+                const ageGroupsContainer = testRow.querySelector('[id^="ageGroups-"]');
+                ageGroupsContainer.innerHTML = '';
+
+                test.ages.forEach((ageData, ageIndex) => {
+                    const ageGroup = document.createElement('div');
+                    ageGroup.className = 'age-group';
+                    ageGroup.setAttribute('data-age-index', ageIndex);
+                    
+                    ageGroup.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h5 style="color: #8b92a8; margin: 1rem 0 0.5rem 0; font-size: 0.95rem;">Edad ${ageIndex + 1}</h5>
+                            ${ageIndex > 0 ? '<button type="button" class="delete-btn" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="this.closest(\'.age-group\').remove()">Eliminar Edad</button>' : ''}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Edad (días)</label>
+                                <input type="number" class="test-age" value="${ageData.age}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #1 (PSI)</label>
+                                <input type="number" class="test-strength-1" value="${ageData.strengths[0] || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #2 (PSI)</label>
+                                <input type="number" class="test-strength-2" value="${ageData.strengths[1] || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #3 (PSI)</label>
+                                <input type="number" class="test-strength-3" value="${ageData.strengths[2] || ''}">
+                            </div>
+                        </div>
+                    `;
+                    
+                    ageGroupsContainer.appendChild(ageGroup);
+                });
+            });
+
+            document.querySelector('.modal-header h2').textContent = 'Editar Mezcla de Concreto';
+            document.getElementById('addMixModal').classList.add('active');
+        }
+
+        // ===== MIX DELETE =====
+        function deleteMix(mixId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta mezcla?')) return;
+
+            const mixes = getMixes();
+            const filteredMixes = mixes.filter(m => m.id !== mixId);
+            saveMixes(filteredMixes);
+
+            renderMixList();
+            renderDashboard();
+        }
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            if (tab === 'dashboard') {
+                document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+                document.getElementById('dashboardTab').classList.add('active');
+            } else if (tab === 'database') {
+                document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+                document.getElementById('databaseTab').classList.add('active');
+            }
+        }
+
+        // ===== MODAL FUNCTIONS =====
+        function openAddMixModal() {
+            document.getElementById('addMixModal').classList.add('active');
+            document.getElementById('mixId').value = '';
+            document.getElementById('project').value = '';
+            document.getElementById('contractor').value = '';
+            document.getElementById('plant').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('specStrength').value = '';
+            document.getElementById('cement').value = '';
+            document.getElementById('cementSupplier').value = '';
+            document.getElementById('coarseAgg').value = '';
+            document.getElementById('coarseAggSupplier').value = '';
+            document.getElementById('manSand').value = '';
+            document.getElementById('manSandSupplier').value = '';
+            document.getElementById('natSand').value = '';
+            document.getElementById('natSandSupplier').value = '';
+            document.getElementById('water').value = '';
+            document.getElementById('qcManager').value = '';
+            document.getElementById('testsContainer').innerHTML = '';
+            document.querySelector('.modal-header h2').textContent = 'Nueva Mezcla de Concreto';
+            addTestRow();
+        }
+
+        function closeAddMixModal() {
+            document.getElementById('addMixModal').classList.remove('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // ===== TEST ROW FUNCTIONS =====
+        function addTestRow() {
+            testRowCounter++;
+            const container = document.getElementById('testsContainer');
+            const testRow = document.createElement('div');
+            testRow.className = 'form-section';
+            testRow.style.background = 'rgba(30, 35, 55, 0.4)';
+            testRow.style.padding = '1.5rem';
+            testRow.style.borderRadius = '12px';
+            testRow.style.marginBottom = '1rem';
+            
+            testRow.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="color: #00d4aa; margin: 0;">Prueba #${testRowCounter}</h4>
+                    <button type="button" class="delete-btn" onclick="this.closest('.form-section').remove()">Eliminar</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" class="test-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Slump (pulgadas)</label>
+                        <input type="number" step="0.1" class="test-slump">
+                    </div>
+                </div>
+                <div id="ageGroups-${testRowCounter}">
+                    <div class="age-group" data-age-index="0">
+                        <h5 style="color: #8b92a8; margin: 1rem 0 0.5rem 0; font-size: 0.95rem;">Edad 1</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Edad (días)</label>
+                                <input type="number" class="test-age" value="7" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #1 (PSI)</label>
+                                <input type="number" class="test-strength-1">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #2 (PSI)</label>
+                                <input type="number" class="test-strength-2">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #3 (PSI)</label>
+                                <input type="number" class="test-strength-3">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="age-group" data-age-index="1">
+                        <h5 style="color: #8b92a8; margin: 1rem 0 0.5rem 0; font-size: 0.95rem;">Edad 2</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Edad (días)</label>
+                                <input type="number" class="test-age" value="28" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #1 (PSI)</label>
+                                <input type="number" class="test-strength-1">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #2 (PSI)</label>
+                                <input type="number" class="test-strength-2">
+                            </div>
+                            <div class="form-group">
+                                <label>Resistencia #3 (PSI)</label>
+                                <input type="number" class="test-strength-3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="add-test-btn" style="margin-top: 1rem;" onclick="addAgeGroup(this, ${testRowCounter})">
+                    + Agregar Edad Adicional
+                </button>
+            `;
+            
+            container.appendChild(testRow);
+        }
+
+        function addAgeGroup(button, testId) {
+            const ageGroupsContainer = document.getElementById(`ageGroups-${testId}`);
+            const currentAgeGroups = ageGroupsContainer.querySelectorAll('.age-group');
+            const newIndex = currentAgeGroups.length;
+            
+            const newAgeGroup = document.createElement('div');
+            newAgeGroup.className = 'age-group';
+            newAgeGroup.setAttribute('data-age-index', newIndex);
+            newAgeGroup.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h5 style="color: #8b92a8; margin: 1rem 0 0.5rem 0; font-size: 0.95rem;">Edad ${newIndex + 1}</h5>
+                    <button type="button" class="delete-btn" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="this.closest('.age-group').remove()">Eliminar Edad</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Edad (días)</label>
+                        <input type="number" class="test-age" value="56" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Resistencia #1 (PSI)</label>
+                        <input type="number" class="test-strength-1">
+                    </div>
+                    <div class="form-group">
+                        <label>Resistencia #2 (PSI)</label>
+                        <input type="number" class="test-strength-2">
+                    </div>
+                    <div class="form-group">
+                        <label>Resistencia #3 (PSI)</label>
+                        <input type="number" class="test-strength-3">
+                    </div>
+                </div>
+            `;
+            ageGroupsContainer.appendChild(newAgeGroup);
+        }
+
+        // ===== SAVE MIX =====
+        function saveMix(event) {
+            event.preventDefault();
+            
+            const tests = [];
+            document.querySelectorAll('#testsContainer > .form-section').forEach(testRow => {
+                const testData = {
+                    date: testRow.querySelector('.test-date').value,
+                    slump: parseFloat(testRow.querySelector('.test-slump').value) || 0,
+                    ages: []
+                };
+
+                testRow.querySelectorAll('.age-group').forEach(ageGroup => {
+                    const age = parseInt(ageGroup.querySelector('.test-age').value);
+                    const strength1 = parseInt(ageGroup.querySelector('.test-strength-1').value) || 0;
+                    const strength2 = parseInt(ageGroup.querySelector('.test-strength-2').value) || 0;
+                    const strength3 = parseInt(ageGroup.querySelector('.test-strength-3').value) || 0;
+                    
+                    if (age) {
+                        testData.ages.push({
+                            age: age,
+                            strengths: [strength1, strength2, strength3].filter(s => s > 0)
+                        });
+                    }
+                });
+
+                if (testData.ages.length > 0) {
+                    tests.push(testData);
+                }
+            });
+
+            const newMix = {
+                id: document.getElementById('mixId').value,
+                project: document.getElementById('project').value,
+                contractor: document.getElementById('contractor').value,
+                plant: document.getElementById('plant').value,
+                description: document.getElementById('description').value,
+                specStrength: parseInt(document.getElementById('specStrength').value),
+                requiredAge: parseInt(document.getElementById('requiredAge').value) || 28,
+                materials: {
+                    cement: parseFloat(document.getElementById('cement').value) || 0,
+                    cementSupplier: document.getElementById('cementSupplier').value,
+                    coarseAgg: parseFloat(document.getElementById('coarseAgg').value) || 0,
+                    coarseAggSupplier: document.getElementById('coarseAggSupplier').value,
+                    manSand: parseFloat(document.getElementById('manSand').value) || 0,
+                    manSandSupplier: document.getElementById('manSandSupplier').value,
+                    natSand: parseFloat(document.getElementById('natSand').value) || 0,
+                    natSandSupplier: document.getElementById('natSandSupplier').value,
+                    water: parseFloat(document.getElementById('water').value) || 0
+                },
+                tests: tests,
+                qcManager: document.getElementById('qcManager').value
+            };
+
+            const mixes = getMixes();
+            const existingIndex = mixes.findIndex(m => m.id === newMix.id);
+            
+            if (existingIndex >= 0) {
+                mixes[existingIndex] = newMix;
+            } else {
+                mixes.push(newMix);
+            }
+            
+            saveMixes(mixes);
+
+            closeAddMixModal();
+            renderMixList();
+            renderDashboard();
+            updateMixEvolutionSelector();
+            switchTab('database');
+        }
+
+        // ===== NORMAL DISTRIBUTION BY MIX CHART =====
+        let normalDistChart = null;
+
+        function normalPDF(x, mean, std) {
+            if (std === 0) return 0;
+            return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+        }
+
+        function populateNormalDistAgeSelector() {
+            const allMixes = getMixes();
+            const agesSet = new Set();
+            allMixes.forEach(mix => {
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => agesSet.add(ageData.age));
+                });
+            });
+            const ages = Array.from(agesSet).sort((a, b) => a - b);
+            const selector = document.getElementById('normalDistAgeSelector');
+            if (!selector) return;
+            const currentVal = selector.value;
+            selector.innerHTML = '<option value="all">Todas las Edades</option>';
+            ages.forEach(age => {
+                const opt = document.createElement('option');
+                opt.value = age;
+                opt.textContent = `${age} días`;
+                selector.appendChild(opt);
+            });
+            // Restore previous selection if still valid, else default to first age or 'all'
+            if (ages.map(String).includes(currentVal)) {
+                selector.value = currentVal;
+            } else if (ages.includes(28)) {
+                selector.value = '28';
+            } else if (ages.length > 0) {
+                selector.value = String(ages[ages.length - 1]);
+            } else {
+                selector.value = 'all';
+            }
+        }
+
+        function renderNormalDistChart() {
+            // Always rebuild canvas safely
+            const safeCanvas = () => {
+                if (normalDistChart) {
+                    try { normalDistChart.destroy(); } catch(e) {}
+                    normalDistChart = null;
+                }
+                const old = document.getElementById('normalDistChart');
+                if (!old) return null;
+                const fresh = document.createElement('canvas');
+                fresh.id = 'normalDistChart';
+                old.parentNode.replaceChild(fresh, old);
+                return fresh;
+            };
+
+            const noDataMsg = (msg) => {
+                const canvas = document.getElementById('normalDistChart');
+                if (canvas) {
+                    const wrapper = canvas.parentNode;
+                    const fresh = document.createElement('canvas');
+                    fresh.id = 'normalDistChart';
+                    wrapper.replaceChild(fresh, canvas);
+                }
+                const statsDiv = document.getElementById('normalDistStats');
+                if (statsDiv) statsDiv.innerHTML = `
+                    <div style="width:100%; text-align:center; padding:2.5rem 1rem; color:#8b92a8; background:rgba(30,35,55,0.4); border-radius:10px; border:1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size:2rem; margin-bottom:0.5rem;">📊</div>
+                        <div style="font-size:1rem; color:#e8eaed; font-weight:600; margin-bottom:0.4rem;">Sin datos para esta edad</div>
+                        <div style="font-size:0.85rem;">${msg}</div>
+                    </div>`;
+            };
+
+            const allMixes = getMixes();
+            let mixes;
+            if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                mixes = allMixes;
+            } else {
+                mixes = allMixes.filter(m => selectedMixIds.includes(m.id));
+            }
+
+            const ageFilter = document.getElementById('normalDistAgeSelector') ? document.getElementById('normalDistAgeSelector').value : 'all';
+
+            if (!mixes.length) {
+                noDataMsg('No hay mezclas disponibles.');
+                return;
+            }
+
+            const mixColors = [
+                { line: 'rgba(0, 212, 170, 1)', fill: 'rgba(0, 212, 170, 0.12)', point: '#00d4aa' },
+                { line: 'rgba(59, 130, 246, 1)', fill: 'rgba(59, 130, 246, 0.12)', point: '#3b82f6' },
+                { line: 'rgba(245, 158, 11, 1)', fill: 'rgba(245, 158, 11, 0.12)', point: '#f59e0b' },
+                { line: 'rgba(239, 68, 68, 1)', fill: 'rgba(239, 68, 68, 0.12)', point: '#ef4444' },
+                { line: 'rgba(147, 51, 234, 1)', fill: 'rgba(147, 51, 234, 0.12)', point: '#9333ea' },
+                { line: 'rgba(236, 72, 153, 1)', fill: 'rgba(236, 72, 153, 0.12)', point: '#ec4899' },
+            ];
+
+            // Collect stats per mix
+            const mixStats = [];
+            let globalMin = Infinity, globalMax = -Infinity;
+
+            mixes.forEach((mix, idx) => {
+                const strengths = [];
+                mix.tests.forEach(test => {
+                    test.ages.forEach(ageData => {
+                        if (ageFilter === 'all' || ageData.age === parseInt(ageFilter)) {
+                            ageData.strengths.forEach(s => strengths.push(s));
+                        }
+                    });
+                });
+
+                if (strengths.length < 2) return;
+
+                const mean = strengths.reduce((a, b) => a + b, 0) / strengths.length;
+                const variance = strengths.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (strengths.length - 1);
+                const std = Math.sqrt(variance);
+                const cv = ((std / mean) * 100).toFixed(1);
+
+                const minVal = mean - 3.5 * std;
+                const maxVal = mean + 3.5 * std;
+                if (minVal < globalMin) globalMin = minVal;
+                if (maxVal > globalMax) globalMax = maxVal;
+
+                mixStats.push({ mix, mean, std, cv, strengths, color: mixColors[idx % mixColors.length], specStrength: mix.specStrength });
+            });
+
+            if (!mixStats.length) {
+                noDataMsg('Seleccione otra edad o agregue datos para esta edad en sus mezclas.');
+                return;
+            }
+
+            // All data verified — now safely rebuild canvas
+            const ctx = safeCanvas();
+            if (!ctx) return;
+
+            // Generate smooth X axis across all mixes range
+            const numPoints = 300;
+            const range = globalMax - globalMin;
+            const step = range / numPoints;
+            const xValues = [];
+            for (let i = 0; i <= numPoints; i++) {
+                xValues.push(globalMin + i * step);
+            }
+
+            const datasets = [];
+
+            mixStats.forEach(({ mix, mean, std, color, specStrength }) => {
+                // Normal curve
+                const curveData = xValues.map(x => ({ x, y: normalPDF(x, mean, std) }));
+
+                datasets.push({
+                    label: `${mix.id} - ${mix.project}`,
+                    data: curveData,
+                    borderColor: color.line,
+                    backgroundColor: color.fill,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    type: 'line'
+                });
+
+                // Mean vertical line
+                const peakY = normalPDF(mean, mean, std);
+                datasets.push({
+                    label: `μ ${mix.id} = ${Math.round(mean)} PSI`,
+                    data: [{ x: mean, y: 0 }, { x: mean, y: peakY }],
+                    borderColor: color.line,
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [6, 3],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    type: 'line'
+                });
+
+                // Spec strength vertical line
+                const specY = normalPDF(specStrength, mean, std);
+                datasets.push({
+                    label: `f'c ${mix.id} = ${specStrength} PSI`,
+                    data: [{ x: specStrength, y: 0 }, { x: specStrength, y: Math.max(specY, peakY * 0.6) }],
+                    borderColor: 'rgba(255, 71, 87, 0.9)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [4, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0,
+                    type: 'line'
+                });
+            });
+
+            normalDistChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e8eaed',
+                                font: { size: 11 },
+                                filter: (item) => !item.text.startsWith('μ') && !item.text.startsWith("f'c")
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 25, 45, 0.95)',
+                            titleColor: '#e8eaed',
+                            bodyColor: '#8b92a8',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                title: (items) => `Resistencia: ${Math.round(items[0].parsed.x)} PSI`,
+                                label: (item) => {
+                                    if (item.dataset.label.startsWith('μ') || item.dataset.label.startsWith("f'c")) return null;
+                                    return ` ${item.dataset.label}: densidad ${item.parsed.y.toExponential(3)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Resistencia (PSI)',
+                                color: '#8b92a8',
+                                font: { size: 13, weight: '600' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#8b92a8', callback: v => v.toFixed(0) }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Densidad de Probabilidad',
+                                color: '#8b92a8',
+                                font: { size: 13, weight: '600' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#8b92a8', callback: v => v.toExponential(2) }
+                        }
+                    }
+                }
+            });
+
+            // Render stats badges
+            const statsContainer = document.getElementById('normalDistStats');
+            if (statsContainer) {
+                statsContainer.innerHTML = mixStats.map(({ mix, mean, std, cv, strengths, color, specStrength }) => {
+                    const n = strengths.length;
+                    const passed = strengths.filter(s => s >= specStrength).length;
+                    const compliance = ((passed / n) * 100).toFixed(1);
+                    const margin = Math.round(mean - specStrength);
+                    return `
+                        <div style="flex:1; min-width:200px; background: rgba(30,35,55,0.6); border:1px solid ${color.line}; border-radius:10px; padding:1rem;">
+                            <div style="font-weight:700; color:${color.line}; margin-bottom:0.5rem; font-size:0.9rem;">${mix.id} – ${mix.project}</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.3rem; font-size:0.82rem; color:#8b92a8;">
+                                <span>μ (Media):</span><span style="color:#e8eaed; font-weight:600;">${Math.round(mean)} PSI</span>
+                                <span>σ (Desv. Std):</span><span style="color:#e8eaed; font-weight:600;">${Math.round(std)} PSI</span>
+                                <span>CV:</span><span style="color:${parseFloat(cv)<10?'#00d4aa':parseFloat(cv)<15?'#f59e0b':'#ef4444'}; font-weight:600;">${cv}%</span>
+                                <span>Margen (μ–f'c):</span><span style="color:${margin>=0?'#00d4aa':'#ef4444'}; font-weight:600;">${margin>0?'+':''}${margin} PSI</span>
+                                <span>Cumplimiento:</span><span style="color:${parseFloat(compliance)>=95?'#00d4aa':parseFloat(compliance)>=85?'#f59e0b':'#ef4444'}; font-weight:600;">${compliance}%</span>
+                                <span>N° muestras:</span><span style="color:#e8eaed; font-weight:600;">${n}</span>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+        }
+
+        // ===== NORMAL DISTRIBUTION AI ANALYSIS =====
+        function analyzeNormalDistWithAI() {
+            const aiBtn = document.getElementById('normalDistAiBtn');
+            const container = document.getElementById('normalDistAiContainer');
+
+            aiBtn.disabled = true;
+            aiBtn.innerHTML = '<span class="loading-spinner"></span> Analizando...';
+
+            try {
+                const allMixes = getMixes();
+                let mixes;
+                if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                    mixes = allMixes;
+                } else {
+                    mixes = allMixes.filter(m => selectedMixIds.includes(m.id));
+                }
+
+                const ageFilter = document.getElementById('normalDistAgeSelector').value;
+                const ageLabel = ageFilter === 'all' ? 'todas las edades' : ageFilter + ' dias';
+
+                if (!mixes.length) {
+                    container.innerHTML = '<div class="ai-analysis"><h4>Analisis Distribucion Normal</h4><div class="insight"><div class="insight-title">Sin datos</div><div class="insight-text">No hay mezclas disponibles para analizar.</div></div></div>';
+                    aiBtn.disabled = false;
+                    aiBtn.innerHTML = '<span>🤖</span> Analisis AI';
+                    return;
+                }
+
+                const mixStats = [];
+                mixes.forEach(mix => {
+                    const strengths = [];
+                    mix.tests.forEach(test => {
+                        test.ages.forEach(ageData => {
+                            if (ageFilter === 'all' || ageData.age === parseInt(ageFilter)) {
+                                ageData.strengths.forEach(s => strengths.push(s));
+                            }
+                        });
+                    });
+                    if (strengths.length < 2) return;
+                    const mean = strengths.reduce((a, b) => a + b, 0) / strengths.length;
+                    const variance = strengths.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (strengths.length - 1);
+                    const std = Math.sqrt(variance);
+                    const cv = (std / mean) * 100;
+                    const passed = strengths.filter(s => s >= mix.specStrength).length;
+                    const compliance = (passed / strengths.length) * 100;
+                    const mg = mean - mix.specStrength;
+                    const zScore = std > 0 ? mg / std : 0;
+                    mixStats.push({ mix, mean, std, cv, compliance, margin: mg, zScore, n: strengths.length });
+                });
+
+                if (!mixStats.length) {
+                    container.innerHTML = '<div class="ai-analysis"><h4>🤖 Analisis Distribucion Normal</h4><div class="insight"><div class="insight-title">Sin datos suficientes</div><div class="insight-text">No hay suficientes datos para la edad seleccionada (' + ageLabel + '). Se necesitan minimo 2 muestras por mezcla.</div></div></div>';
+                    aiBtn.disabled = false;
+                    aiBtn.innerHTML = '<span>🤖</span> Analisis AI';
+                    return;
+                }
+
+                const insights = [];
+
+                insights.push({
+                    title: '📊 Resumen de Distribucion — ' + ageLabel,
+                    text: 'Se analizaron ' + mixStats.length + ' mezcla(s) con un total de ' + mixStats.reduce((a,b) => a + b.n, 0) + ' muestras. La distribucion normal permite evaluar la confiabilidad estadistica del proceso productivo y estimar la probabilidad de fallo.'
+                });
+
+                mixStats.forEach(function(stat) {
+                    var mix = stat.mix, mean = stat.mean, std = stat.std, cv = stat.cv, compliance = stat.compliance, mg = stat.margin, zScore = stat.zScore, n = stat.n;
+                    var cvStatus = cv < 10 ? '✅ Excelente control de proceso' : cv < 15 ? '⚠️ Variabilidad moderada, proceso aceptable' : '🔴 Alta variabilidad, revisar proceso';
+                    var mgStatus = mg >= 500 ? 'muy holgado, optimo' : mg >= 200 ? 'adecuado, dentro de parametros' : mg >= 0 ? 'ajustado, monitorear de cerca' : '🔴 NEGATIVO — promedio bajo la especificacion';
+                    var zStatus = zScore >= 2.0 ? 'Alta confiabilidad (prob. fallo < 2.3%)' : zScore >= 1.5 ? 'Confiabilidad aceptable (prob. fallo ~6.7%)' : zScore >= 1.0 ? 'Confiabilidad baja (prob. fallo ~16%)' : 'Confiabilidad critica — alta probabilidad de fallo';
+                    insights.push({
+                        title: '🔬 ' + mix.id + ' — ' + mix.project,
+                        text: 'N=' + n + ' muestras | μ=' + Math.round(mean) + ' PSI | σ=' + Math.round(std) + ' PSI | CV=' + cv.toFixed(1) + '%\n' +
+                              cvStatus + '.\n' +
+                              'Margen sobre f\'c (' + mix.specStrength + ' PSI): ' + Math.round(mg) + ' PSI — ' + mgStatus + '.\n' +
+                              'Indice de confiabilidad β=' + zScore.toFixed(2) + ': ' + zStatus + '.\n' +
+                              'Cumplimiento observado: ' + compliance.toFixed(1) + '%.'
+                    });
+                });
+
+                if (mixStats.length > 1) {
+                    var bestCV = mixStats.reduce(function(a, b) { return a.cv < b.cv ? a : b; });
+                    var bestC = mixStats.reduce(function(a, b) { return a.compliance > b.compliance ? a : b; });
+                    var bestMg = mixStats.reduce(function(a, b) { return a.margin > b.margin ? a : b; });
+                    insights.push({
+                        title: '📈 Comparativa entre Mezclas',
+                        text: 'Mezcla mas consistente (menor CV): ' + bestCV.mix.id + ' con CV=' + bestCV.cv.toFixed(1) + '%. ' +
+                              'Mayor cumplimiento: ' + bestC.mix.id + ' con ' + bestC.compliance.toFixed(1) + '%. ' +
+                              'Mayor margen de seguridad: ' + bestMg.mix.id + ' con +' + Math.round(bestMg.margin) + ' PSI sobre f\'c.'
+                    });
+                }
+
+                var problemMixes = mixStats.filter(function(s) { return s.cv >= 15 || s.compliance < 95 || s.margin < 0; });
+                insights.push({
+                    title: '💡 Recomendaciones Estadisticas',
+                    text: (problemMixes.length > 0 ? 'Las mezclas ' + problemMixes.map(function(s) { return s.mix.id; }).join(', ') + ' requieren atencion inmediata. ' : 'Todas las mezclas presentan indicadores dentro de rangos aceptables. ') +
+                          '1) Reducir CV controlando relacion a/c y tiempo de mezclado. ' +
+                          '2) Incrementar dosificacion si el margen es insuficiente. ' +
+                          '3) Mantener minimo 30 muestras por mezcla para mayor representatividad. ' +
+                          '4) Aplicar criterio ACI 214 para evaluacion de variabilidad del concreto.'
+                });
+
+                var html = '<div class="ai-analysis" style="margin-top:1rem;"><h4>🤖 Analisis Inteligente — Distribucion Normal</h4>';
+                insights.forEach(function(ins) {
+                    html += '<div class="insight"><div class="insight-title">' + ins.title + '</div><div class="insight-text" style="white-space:pre-line;">' + ins.text + '</div></div>';
+                });
+                html += '</div>';
+                container.innerHTML = html;
+
+            } catch(err) {
+                console.error('Error in normal dist AI:', err);
+                container.innerHTML = '<div class="ai-analysis" style="border-color:rgba(255,71,87,.3);background:rgba(255,71,87,.1);margin-top:1rem;"><h4 style="color:#ff4757;">⚠️ Error en Analisis</h4><div class="insight"><div class="insight-title">Error</div><div class="insight-text">' + err.message + '</div></div></div>';
+            } finally {
+                aiBtn.disabled = false;
+                aiBtn.innerHTML = '<span>🤖</span> Analisis AI';
+            }
+        }
+
+        // ===== NORMAL DISTRIBUTION PDF REPORT =====
+        async function generateNormalDistReport() {
+            try {
+                var jsPDFLib = window.jspdf;
+                var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
+
+                var allMixes = getMixes();
+                var mixes;
+                if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
+                    mixes = allMixes;
+                } else {
+                    mixes = allMixes.filter(function(m) { return selectedMixIds.includes(m.id); });
+                }
+
+                var ageFilter = document.getElementById('normalDistAgeSelector').value;
+                var ageLabel = ageFilter === 'all' ? 'Todas las Edades' : ageFilter + ' dias';
+
+                var yPos = 20;
+                var pageHeight = pdf.internal.pageSize.height;
+                var pageWidth = pdf.internal.pageSize.width;
+                var mg = 20;
+                var colW = pageWidth - 2 * mg;
+
+                function checkPage(h) {
+                    if (yPos + h > pageHeight - mg) { pdf.addPage(); yPos = 20; }
+                }
+
+                function fillRect(x, y, w, h, r, g, b) {
+                    pdf.setFillColor(r, g, b);
+                    pdf.rect(x, y, w, h, 'F');
+                }
+
+                // Logo
+                var logo = getCompanyLogo();
+                if (logo) {
+                    try { pdf.addImage(logo, 'PNG', mg, yPos, 18, 18); } catch(e) {}
+                }
+
+                // Header
+                fillRect(logo ? mg + 22 : mg, yPos, colW - (logo ? 22 : 0), 18, 10, 30, 50);
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 212, 170);
+                pdf.text('Reporte de Distribucion Normal por Mezcla', logo ? mg + 26 : mg + 4, yPos + 7);
+                pdf.setFontSize(8.5);
+                pdf.setTextColor(170, 210, 210);
+                pdf.text(getCompanyName() + '  |  Edad: ' + ageLabel + '  |  Fecha: ' + new Date().toLocaleDateString('es-ES'), logo ? mg + 26 : mg + 4, yPos + 14);
+                yPos += 26;
+
+                // Chart
+                checkPage(100);
+                pdf.setFontSize(12);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('Grafica de Distribucion Normal', mg, yPos);
+                yPos += 6;
+                try {
+                    var chartCanvas = document.getElementById('normalDistChart');
+                    var chartImg = await html2canvas(chartCanvas, { backgroundColor: '#0a0e27', scale: 2 });
+                    var chartURL = chartImg.toDataURL('image/png');
+                    var chartH = 85;
+                    pdf.addImage(chartURL, 'PNG', mg, yPos, colW, chartH);
+                    yPos += chartH + 10;
+                } catch(e) { yPos += 5; }
+
+                // Compute mix stats
+                var mixStats = [];
+                mixes.forEach(function(mix) {
+                    var strengths = [];
+                    mix.tests.forEach(function(test) {
+                        test.ages.forEach(function(ageData) {
+                            if (ageFilter === 'all' || ageData.age === parseInt(ageFilter)) {
+                                ageData.strengths.forEach(function(s) { strengths.push(s); });
+                            }
+                        });
+                    });
+                    if (strengths.length < 2) return;
+                    var mean = strengths.reduce(function(a,b){return a+b;},0) / strengths.length;
+                    var variance = strengths.reduce(function(sum,v){return sum+Math.pow(v-mean,2);},0)/(strengths.length-1);
+                    var std = Math.sqrt(variance);
+                    var cv = (std/mean)*100;
+                    var passed = strengths.filter(function(s){return s>=mix.specStrength;}).length;
+                    var compliance = (passed/strengths.length)*100;
+                    var margin2 = mean - mix.specStrength;
+                    var zScore = std > 0 ? margin2/std : 0;
+                    mixStats.push({ mix: mix, mean: mean, std: std, cv: cv, compliance: compliance, margin: margin2, zScore: zScore, n: strengths.length, strengths: strengths });
+                });
+
+                if (mixStats.length > 0) {
+                    checkPage(50);
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.text('Estadisticas por Mezcla', mg, yPos);
+                    yPos += 8;
+
+                    var cols = ['Mezcla', 'N', "f'c Esp.", 'Media (u)', 'Desv.Std (o)', 'CV %', 'Margen', 'b', 'Cumpl.'];
+                    var cws = [32, 8, 18, 20, 24, 12, 18, 12, 16];
+                    fillRect(mg, yPos, colW, 8, 0, 60, 80);
+                    pdf.setFontSize(7.5);
+                    pdf.setTextColor(255, 255, 255);
+                    var xc = mg + 2;
+                    cols.forEach(function(col, i) { pdf.text(col, xc, yPos + 5.5); xc += cws[i]; });
+                    yPos += 8;
+
+                    mixStats.forEach(function(stat, rowIdx) {
+                        checkPage(10);
+                        if (rowIdx % 2 === 0) fillRect(mg, yPos, colW, 8, 240, 248, 255);
+                        pdf.setFontSize(7.5);
+                        pdf.setTextColor(30, 30, 30);
+                        var vals = [
+                            stat.mix.id,
+                            '' + stat.n,
+                            '' + stat.mix.specStrength,
+                            '' + Math.round(stat.mean),
+                            '' + Math.round(stat.std),
+                            stat.cv.toFixed(1) + '%',
+                            (stat.margin >= 0 ? '+' : '') + Math.round(stat.margin),
+                            stat.zScore.toFixed(2),
+                            stat.compliance.toFixed(1) + '%'
+                        ];
+                        xc = mg + 2;
+                        vals.forEach(function(val, i) { pdf.text(val, xc, yPos + 5.5); xc += cws[i]; });
+                        yPos += 8;
+                    });
+                    yPos += 6;
+
+                    // Legend
+                    checkPage(20);
+                    fillRect(mg, yPos, colW, 6, 220, 240, 255);
+                    pdf.setFontSize(8);
+                    pdf.setTextColor(0, 80, 120);
+                    pdf.text('Referencia: CV < 10% Excelente  |  CV 10-15% Aceptable  |  CV > 15% Alta variabilidad', mg + 3, yPos + 4);
+                    yPos += 8;
+                    fillRect(mg, yPos, colW, 6, 220, 255, 235);
+                    pdf.setTextColor(0, 100, 60);
+                    pdf.text('b (Indice confiabilidad): b >= 2.0 Optimo  |  b 1.5-2.0 Aceptable  |  b < 1.5 Requiere revision', mg + 3, yPos + 4);
+                    yPos += 12;
+
+                    // Detail per mix
+                    mixStats.forEach(function(stat) {
+                        checkPage(40);
+                        pdf.setFontSize(11);
+                        pdf.setTextColor(0, 100, 140);
+                        pdf.text('Detalle: ' + stat.mix.id + ' — ' + stat.mix.project, mg, yPos);
+                        yPos += 6;
+                        pdf.setFontSize(8);
+                        pdf.setTextColor(60, 60, 60);
+                        pdf.text('f\'c Especificada: ' + stat.mix.specStrength + ' PSI  |  Planta: ' + (stat.mix.plant || 'N/A'), mg + 3, yPos);
+                        yPos += 5;
+
+                        var sorted = stat.strengths.slice().sort(function(a,b){return a-b;});
+                        var row = sorted.map(function(s,i){return (i+1)+'. '+s+' PSI';}).join('   ');
+                        var wrapped = pdf.splitTextToSize(row, colW - 4);
+                        wrapped.forEach(function(line) { checkPage(6); pdf.text(line, mg + 3, yPos); yPos += 5; });
+
+                        checkPage(14);
+                        pdf.setTextColor(0, 100, 140);
+                        pdf.text('u = ' + Math.round(stat.mean) + ' PSI   u+o = ' + Math.round(stat.mean+stat.std) + '   u-o = ' + Math.round(stat.mean-stat.std), mg + 3, yPos);
+                        yPos += 5;
+                        pdf.text('u+2o = ' + Math.round(stat.mean+2*stat.std) + '   u-2o = ' + Math.round(stat.mean-2*stat.std) + '   u+3o = ' + Math.round(stat.mean+3*stat.std) + '   u-3o = ' + Math.round(stat.mean-3*stat.std), mg + 3, yPos);
+                        yPos += 10;
+                    });
+                }
+
+                // Footer
+                var pageCount = pdf.internal.getNumberOfPages();
+                for (var i = 1; i <= pageCount; i++) {
+                    pdf.setPage(i);
+                    pdf.setFontSize(7.5);
+                    pdf.setTextColor(150, 150, 150);
+                    pdf.text(getCompanyName() + ' — Distribucion Normal por Mezcla — Pag. ' + i + ' de ' + pageCount, mg, pageHeight - 8);
+                    pdf.text('Generado: ' + new Date().toLocaleString('es-ES'), pageWidth - mg - 60, pageHeight - 8);
+                }
+
+                pdf.save('Distribucion_Normal_' + ageLabel.replace(' ', '_') + '_' + new Date().toISOString().slice(0,10) + '.pdf');
+
+            } catch(err) {
+                console.error('Error generating normal dist report:', err);
+                alert('Error al generar el reporte: ' + err.message);
+            }
+        }
+
+        // ===== EVENT LISTENERS =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Company name editing
+            const companyNameElement = document.getElementById('companyName');
+            companyNameElement.addEventListener('blur', function() {
+                saveCompanyName(this.textContent.trim());
+            });
+            companyNameElement.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
+                }
+            });
+
+            // Logo upload
+            document.getElementById('logoUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const logoDataUrl = event.target.result;
+                        saveCompanyLogo(logoDataUrl);
+                        loadCompanyLogo();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Initialize
+            loadCompanyName();
+            loadCompanyLogo();
+            initializeData();
+            renderDashboard();
+            renderMixList();
+            updateMixEvolutionSelector();
+        });
+    </script>
+</body>
+</html>
