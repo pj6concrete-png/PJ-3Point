@@ -882,6 +882,13 @@
                         </button>
                     </div>
                 </div>
+                <div style="display:flex; flex-direction:column; justify-content:flex-end; margin-left:auto;">
+                    <button onclick="generateFullReport()" style="padding:0.85rem 1.5rem; border-radius:10px; background:linear-gradient(135deg,#00d4aa 0%,#0077ff 100%); border:none; color:white; cursor:pointer; font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:0.5rem; box-shadow:0 4px 15px rgba(0,212,170,0.35); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(0,212,170,0.5)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0,212,170,0.35)'">
+                        <span style="font-size:1.2rem;">📋</span>
+                        <span>Reporte Completo</span>
+                    </button>
+                    <div style="font-size:0.75rem; color:#8b92a8; margin-top:0.4rem; text-align:center;">Mezclas seleccionadas</div>
+                </div>
             </div>
 
             <div class="dashboard-grid" id="statsGrid">
@@ -1042,14 +1049,91 @@
                         <h3>🏗️ Materiales</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Cemento (lb/yd³)</label>
-                                <input type="number" step="0.1" id="cement">
+                                <label>Cemento Portland (lb/yd³)</label>
+                                <input type="number" step="0.1" id="cement" oninput="calcSCMPcts()">
                             </div>
                             <div class="form-group">
                                 <label>Proveedor Cemento</label>
                                 <input type="text" id="cementSupplier">
                             </div>
                         </div>
+
+                        <!-- ⚗️ SCM SECTION -->
+                        <div style="border:1px solid rgba(0,212,170,0.25);border-radius:12px;padding:1.1rem 1.2rem;margin:0.5rem 0 1rem;background:rgba(0,212,170,0.04);">
+                            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;">
+                                <span style="font-size:1.1rem;">⚗️</span>
+                                <span style="color:#00d4aa;font-weight:700;font-size:0.95rem;">Materiales Cementicios Suplementarios (SCM)</span>
+                                <span style="color:#8b92a8;font-size:0.8rem;margin-left:auto;">Fly Ash · Slag · Sílice · Metacaolín</span>
+                            </div>
+
+                            <!-- Header row -->
+                            <div style="display:grid;grid-template-columns:1.6fr 1fr 0.7fr 1.2fr;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.2rem;">
+                                <span style="color:#8b92a8;font-size:0.78rem;font-weight:600;">TIPO SCM</span>
+                                <span style="color:#8b92a8;font-size:0.78rem;font-weight:600;">PESO (lb/yd³)</span>
+                                <span style="color:#8b92a8;font-size:0.78rem;font-weight:600;">% CEMENTICEO</span>
+                                <span style="color:#8b92a8;font-size:0.78rem;font-weight:600;">PROVEEDOR</span>
+                            </div>
+
+                            <!-- SCM 1 -->
+                            <div style="display:grid;grid-template-columns:1.6fr 1fr 0.7fr 1.2fr;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
+                                <select id="scm1Type" onchange="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;font-size:0.88rem;">
+                                    <option value="">— Sin SCM 1 —</option>
+                                    <option value="Fly Ash Clase C">Fly Ash Clase C</option>
+                                    <option value="Fly Ash Clase F">Fly Ash Clase F</option>
+                                    <option value="Slag GGBFS">Slag GGBFS</option>
+                                    <option value="Humo de Sílice">Humo de Sílice</option>
+                                    <option value="Metacaolín">Metacaolín</option>
+                                    <option value="Ceniza de Arroz">Ceniza de Arroz</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <input type="number" step="0.1" id="scm1Weight" placeholder="0" oninput="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                                <input type="text"   id="scm1Pct"    readonly placeholder="—%" style="padding:0.55rem 0.7rem;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);border-radius:8px;color:#00d4aa;font-weight:700;text-align:center;">
+                                <input type="text"   id="scm1Supplier" placeholder="Proveedor" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                            </div>
+
+                            <!-- SCM 2 -->
+                            <div style="display:grid;grid-template-columns:1.6fr 1fr 0.7fr 1.2fr;gap:0.5rem;margin-bottom:0.5rem;align-items:center;">
+                                <select id="scm2Type" onchange="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;font-size:0.88rem;">
+                                    <option value="">— Sin SCM 2 —</option>
+                                    <option value="Fly Ash Clase C">Fly Ash Clase C</option>
+                                    <option value="Fly Ash Clase F">Fly Ash Clase F</option>
+                                    <option value="Slag GGBFS">Slag GGBFS</option>
+                                    <option value="Humo de Sílice">Humo de Sílice</option>
+                                    <option value="Metacaolín">Metacaolín</option>
+                                    <option value="Ceniza de Arroz">Ceniza de Arroz</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <input type="number" step="0.1" id="scm2Weight" placeholder="0" oninput="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                                <input type="text"   id="scm2Pct"    readonly placeholder="—%" style="padding:0.55rem 0.7rem;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);border-radius:8px;color:#00d4aa;font-weight:700;text-align:center;">
+                                <input type="text"   id="scm2Supplier" placeholder="Proveedor" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                            </div>
+
+                            <!-- SCM 3 -->
+                            <div style="display:grid;grid-template-columns:1.6fr 1fr 0.7fr 1.2fr;gap:0.5rem;margin-bottom:0.75rem;align-items:center;">
+                                <select id="scm3Type" onchange="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;font-size:0.88rem;">
+                                    <option value="">— Sin SCM 3 —</option>
+                                    <option value="Fly Ash Clase C">Fly Ash Clase C</option>
+                                    <option value="Fly Ash Clase F">Fly Ash Clase F</option>
+                                    <option value="Slag GGBFS">Slag GGBFS</option>
+                                    <option value="Humo de Sílice">Humo de Sílice</option>
+                                    <option value="Metacaolín">Metacaolín</option>
+                                    <option value="Ceniza de Arroz">Ceniza de Arroz</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <input type="number" step="0.1" id="scm3Weight" placeholder="0" oninput="calcSCMPcts()" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                                <input type="text"   id="scm3Pct"    readonly placeholder="—%" style="padding:0.55rem 0.7rem;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);border-radius:8px;color:#00d4aa;font-weight:700;text-align:center;">
+                                <input type="text"   id="scm3Supplier" placeholder="Proveedor" style="padding:0.55rem 0.7rem;background:rgba(20,25,45,0.7);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e8eaed;">
+                            </div>
+
+                            <!-- Totals bar -->
+                            <div id="scmTotalsBar" style="display:none;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);border-radius:8px;padding:0.6rem 1rem;display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;">
+                                <div><span style="color:#8b92a8;font-size:0.78rem;">TOTAL CEMENTICIO</span><div id="scmTotalLbl" style="color:#00d4aa;font-weight:700;font-size:1.05rem;"></div></div>
+                                <div><span style="color:#8b92a8;font-size:0.78rem;">PORTLAND</span><div id="scmPortlandPct" style="color:#e8eaed;font-weight:600;"></div></div>
+                                <div id="scmActiveList" style="color:#e8eaed;font-size:0.85rem;flex:1;"></div>
+                            </div>
+                        </div>
+                        <!-- end SCM SECTION -->
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Agregado Grueso (lb/yd³)</label>
@@ -2432,44 +2516,19 @@
                 const showEfficiency = document.getElementById('showCementEfficiency').checked;
                 const selectedAges = getSelectedAges();
                 
-                let yPos = 20;
                 const pageHeight = pdf.internal.pageSize.height;
                 const pageWidth = pdf.internal.pageSize.width;
                 const margin = 20;
+                let yPos = await buildPDFHeader(pdf, 'Reporte de Evolucion de Resistencia', `Mezcla: ${mix.id}`);
                 
                 function checkNewPage(heightNeeded) {
-                    if (yPos + heightNeeded > pageHeight - margin) {
+                    if (yPos + heightNeeded > pageHeight - 18) {
                         pdf.addPage();
                         yPos = 20;
                         return true;
                     }
                     return false;
                 }
-                
-                // Add logo if available
-                const logo = getCompanyLogo();
-                if (logo) {
-                    try {
-                        pdf.addImage(logo, 'PNG', margin, yPos, 20, 20);
-                        yPos += 25;
-                    } catch (error) {
-                        console.error('Error adding logo:', error);
-                    }
-                }
-                
-                // Title
-                pdf.setFontSize(20);
-                pdf.setTextColor(0, 212, 170);
-                pdf.text('Reporte de Evolución de Resistencia', margin, yPos);
-                yPos += 10;
-                
-                // Company and date
-                pdf.setFontSize(12);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(getCompanyName(), margin, yPos);
-                yPos += 6;
-                pdf.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, margin, yPos);
-                yPos += 12;
                 
                 // Mix details
                 pdf.setFontSize(14);
@@ -2646,13 +2705,13 @@
                     });
                 }
                 
-                // Footer
-                checkNewPage(15);
-                yPos = pageHeight - 15;
-                pdf.setFontSize(8);
-                pdf.setTextColor(150, 150, 150);
-                pdf.text(`Generado por ${getCompanyName()} - ${new Date().toLocaleString('es-ES')}`, margin, yPos);
-                
+                // Footer on all pages
+                const totalPagesEvo = pdf.internal.getNumberOfPages();
+                for (let p = 1; p <= totalPagesEvo; p++) {
+                    pdf.setPage(p);
+                    await addPDFFooter(pdf, p, totalPagesEvo, 'Reporte de Evolucion — ' + mix.id);
+                }
+
                 // Save PDF
                 const fileName = `Reporte_Evolucion_${mix.id}_${new Date().toISOString().split('T')[0]}.pdf`;
                 pdf.save(fileName);
@@ -2661,6 +2720,76 @@
                 console.error('Error generating evolution report:', error);
                 alert('Error al generar el reporte: ' + error.message);
             }
+        }
+
+        // ===== SHARED PDF HEADER HELPER =====
+        async function buildPDFHeader(pdf, title, subtitle) {
+            var pageWidth = pdf.internal.pageSize.width;
+            var margin    = 20;
+            var yPos      = 14;
+
+            // White background (explicit, in case of any default)
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(0, 0, pageWidth, 50, 'F');
+
+            // Teal accent left bar
+            pdf.setFillColor(0, 180, 150);
+            pdf.rect(0, 0, 5, 50, 'F');
+
+            // Bottom separator line
+            pdf.setDrawColor(0, 180, 150);
+            pdf.setLineWidth(0.8);
+            pdf.line(0, 50, pageWidth, 50);
+
+            // Logo — detect format automatically
+            var logo = getCompanyLogo();
+            var logoWidth = 0;
+            if (logo) {
+                try {
+                    var fmt = 'PNG';
+                    if (logo.indexOf('data:image/jpeg') === 0 || logo.indexOf('data:image/jpg') === 0) fmt = 'JPEG';
+                    else if (logo.indexOf('data:image/webp') === 0) fmt = 'WEBP';
+                    pdf.addImage(logo, fmt, 10, 8, 28, 28);
+                    logoWidth = 34;
+                } catch(e) { console.warn('Logo error:', e); }
+            }
+
+            var textX = margin + logoWidth;
+
+            // Title
+            pdf.setFontSize(17);
+            pdf.setTextColor(0, 130, 110);
+            pdf.text(title, textX, yPos + 8);
+
+            // Subtitle line
+            pdf.setFontSize(9);
+            pdf.setTextColor(80, 80, 80);
+            var dateStr = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+            pdf.text(getCompanyName() + '   |   ' + (subtitle || '') + '   |   ' + dateStr, textX, yPos + 18);
+
+            // Thin teal underline under subtitle
+            pdf.setDrawColor(0, 212, 170);
+            pdf.setLineWidth(0.3);
+            pdf.line(textX, yPos + 21, pageWidth - margin, yPos + 21);
+
+            return 56; // yPos after header
+        }
+
+        async function addPDFFooter(pdf, pageNum, totalPages, label) {
+            var pageWidth  = pdf.internal.pageSize.width;
+            var pageHeight = pdf.internal.pageSize.height;
+            var margin     = 20;
+
+            // Light separator line
+            pdf.setDrawColor(0, 180, 150);
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(getCompanyName() + '  —  ' + label, margin, pageHeight - 6);
+            pdf.setTextColor(0, 130, 110);
+            pdf.text('Pag. ' + pageNum + ' de ' + totalPages, pageWidth - margin - 18, pageHeight - 6);
         }
 
         // ===== PDF GENERATION =====
@@ -2700,44 +2829,19 @@
                     return;
                 }
                 
-                let yPos = 20;
                 const pageHeight = pdf.internal.pageSize.height;
                 const pageWidth = pdf.internal.pageSize.width;
                 const margin = 20;
+                let yPos = await buildPDFHeader(pdf, 'Reporte de Control de Calidad', 'Distribucion General');
                 
                 function checkNewPage(heightNeeded) {
-                    if (yPos + heightNeeded > pageHeight - margin) {
+                    if (yPos + heightNeeded > pageHeight - 18) {
                         pdf.addPage();
                         yPos = 20;
                         return true;
                     }
                     return false;
                 }
-                
-                // Add logo if available
-                const logo = getCompanyLogo();
-                if (logo) {
-                    try {
-                        pdf.addImage(logo, 'PNG', margin, yPos, 20, 20);
-                        yPos += 25;
-                    } catch (error) {
-                        console.error('Error adding logo:', error);
-                    }
-                }
-                
-                // Title
-                pdf.setFontSize(20);
-                pdf.setTextColor(0, 212, 170);
-                pdf.text('Reporte de Control de Calidad', margin, yPos);
-                yPos += 10;
-                
-                // Company and date
-                pdf.setFontSize(12);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(getCompanyName(), margin, yPos);
-                yPos += 6;
-                pdf.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, margin, yPos);
-                yPos += 12;
                 
                 // Summary
                 pdf.setFontSize(14);
@@ -3100,10 +3204,32 @@
                 <h3 style="color: #00d4aa; margin-bottom: 1rem;">Materiales</h3>
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <label>Cemento</label>
+                        <label>Cemento Portland</label>
                         <div class="value">${mix.materials.cement} lb/yd³</div>
                         <div style="font-size: 0.85rem; color: #8b92a8; margin-top: 0.25rem;">${mix.materials.cementSupplier || 'N/A'}</div>
                     </div>
+                    ${(function(){
+                        var s1w = mix.materials.scm1Weight||0, s2w = mix.materials.scm2Weight||0, s3w = mix.materials.scm3Weight||0;
+                        if (s1w===0 && s2w===0 && s3w===0) return '';
+                        var total = (mix.materials.cement||0) + s1w + s2w + s3w;
+                        function pct(w){ return total>0 ? (w/total*100).toFixed(1)+'%' : '—'; }
+                        function chip(type, w, sup){
+                            if (!w) return '';
+                            return '<div style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);border-radius:6px;padding:0.3rem 0.7rem;margin:0.2rem 0.2rem 0 0;">'
+                                + '<span style="color:#00d4aa;font-weight:700;font-size:0.85rem;">'+(type||'SCM')+'</span>'
+                                + '<span style="color:#e8eaed;font-size:0.85rem;">'+w+' lb/yd³</span>'
+                                + '<span style="background:#00d4aa;color:#0a0e27;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.78rem;font-weight:700;">'+pct(w)+'</span>'
+                                + (sup ? '<span style="color:#8b92a8;font-size:0.78rem;">'+sup+'</span>' : '')
+                                + '</div>';
+                        }
+                        return '<div class="detail-item" style="grid-column:1/-1;">'
+                            + '<label style="color:#00d4aa;">⚗️ SCM &nbsp;|&nbsp; Total Cementicio: <strong style="color:#e8eaed;">'+total.toFixed(1)+' lb/yd³</strong> &nbsp;|&nbsp; Portland: <strong style="color:#e8eaed;">'+pct(mix.materials.cement||0)+'</strong></label>'
+                            + '<div style="margin-top:0.4rem;">'
+                            + chip(mix.materials.scm1Type,s1w,mix.materials.scm1Supplier)
+                            + chip(mix.materials.scm2Type,s2w,mix.materials.scm2Supplier)
+                            + chip(mix.materials.scm3Type,s3w,mix.materials.scm3Supplier)
+                            + '</div></div>';
+                    })()}
                     <div class="detail-item">
                         <label>Agregado Grueso</label>
                         <div class="value">${mix.materials.coarseAgg} lb/yd³</div>
@@ -3189,6 +3315,16 @@
             
             document.getElementById('cement').value = mix.materials.cement || '';
             document.getElementById('cementSupplier').value = mix.materials.cementSupplier || '';
+            document.getElementById('scm1Type').value     = (mix.materials.scm1Type     || '');
+            document.getElementById('scm1Weight').value   = (mix.materials.scm1Weight   || '');
+            document.getElementById('scm1Supplier').value = (mix.materials.scm1Supplier || '');
+            document.getElementById('scm2Type').value     = (mix.materials.scm2Type     || '');
+            document.getElementById('scm2Weight').value   = (mix.materials.scm2Weight   || '');
+            document.getElementById('scm2Supplier').value = (mix.materials.scm2Supplier || '');
+            document.getElementById('scm3Type').value     = (mix.materials.scm3Type     || '');
+            document.getElementById('scm3Weight').value   = (mix.materials.scm3Weight   || '');
+            document.getElementById('scm3Supplier').value = (mix.materials.scm3Supplier || '');
+            calcSCMPcts();
             document.getElementById('coarseAgg').value = mix.materials.coarseAgg || '';
             document.getElementById('coarseAggSupplier').value = mix.materials.coarseAggSupplier || '';
             document.getElementById('manSand').value = mix.materials.manSand || '';
@@ -3297,6 +3433,9 @@
             document.getElementById('natSandSupplier').value = '';
             document.getElementById('water').value = '';
             document.getElementById('qcManager').value = '';
+            ['scm1Type','scm2Type','scm3Type'].forEach(id => document.getElementById(id).value = '');
+            ['scm1Weight','scm2Weight','scm3Weight','scm1Supplier','scm2Supplier','scm3Supplier'].forEach(id => document.getElementById(id).value = '');
+            calcSCMPcts();
             document.getElementById('testsContainer').innerHTML = '';
             document.querySelector('.modal-header h2').textContent = 'Nueva Mezcla de Concreto';
             addTestRow();
@@ -3463,8 +3602,17 @@
                 specStrength: parseInt(document.getElementById('specStrength').value),
                 requiredAge: parseInt(document.getElementById('requiredAge').value) || 28,
                 materials: {
-                    cement: parseFloat(document.getElementById('cement').value) || 0,
+                    cement:       parseFloat(document.getElementById('cement').value) || 0,
                     cementSupplier: document.getElementById('cementSupplier').value,
+                    scm1Type:     document.getElementById('scm1Type').value,
+                    scm1Weight:   parseFloat(document.getElementById('scm1Weight').value) || 0,
+                    scm1Supplier: document.getElementById('scm1Supplier').value,
+                    scm2Type:     document.getElementById('scm2Type').value,
+                    scm2Weight:   parseFloat(document.getElementById('scm2Weight').value) || 0,
+                    scm2Supplier: document.getElementById('scm2Supplier').value,
+                    scm3Type:     document.getElementById('scm3Type').value,
+                    scm3Weight:   parseFloat(document.getElementById('scm3Weight').value) || 0,
+                    scm3Supplier: document.getElementById('scm3Supplier').value,
                     coarseAgg: parseFloat(document.getElementById('coarseAgg').value) || 0,
                     coarseAggSupplier: document.getElementById('coarseAggSupplier').value,
                     manSand: parseFloat(document.getElementById('manSand').value) || 0,
@@ -3888,26 +4036,24 @@
             try {
                 var jsPDFLib = window.jspdf;
                 var pdf = new jsPDFLib.jsPDF('p', 'mm', 'a4');
-
-                var allMixes = getMixes();
-                var mixes;
-                if (selectedMixIds.includes('all') || selectedMixIds.length === 0) {
-                    mixes = allMixes;
-                } else {
-                    mixes = allMixes.filter(function(m) { return selectedMixIds.includes(m.id); });
-                }
+                var pageHeight = pdf.internal.pageSize.height;
+                var pageWidth  = pdf.internal.pageSize.width;
+                var margin = 20;
+                var colW   = pageWidth - 2 * margin;
 
                 var ageFilter = document.getElementById('normalDistAgeSelector').value;
-                var ageLabel = ageFilter === 'all' ? 'Todas las Edades' : ageFilter + ' dias';
+                var ageLabel  = ageFilter === 'all' ? 'Todas las Edades' : ageFilter + ' dias';
 
-                var yPos = 20;
-                var pageHeight = pdf.internal.pageSize.height;
-                var pageWidth = pdf.internal.pageSize.width;
-                var mg = 20;
-                var colW = pageWidth - 2 * mg;
+                var allMixes = getMixes();
+                var mixes = (selectedMixIds.includes('all') || selectedMixIds.length === 0)
+                    ? allMixes
+                    : allMixes.filter(function(m) { return selectedMixIds.includes(m.id); });
+
+                // ── Shared dark header ──────────────────────────────
+                var yPos = await buildPDFHeader(pdf, 'Distribucion Normal por Mezcla', 'Edad: ' + ageLabel);
 
                 function checkPage(h) {
-                    if (yPos + h > pageHeight - mg) { pdf.addPage(); yPos = 20; }
+                    if (yPos + h > pageHeight - 18) { pdf.addPage(); yPos = 20; }
                 }
 
                 function fillRect(x, y, w, h, r, g, b) {
@@ -3915,38 +4061,30 @@
                     pdf.rect(x, y, w, h, 'F');
                 }
 
-                // Logo
-                var logo = getCompanyLogo();
-                if (logo) {
-                    try { pdf.addImage(logo, 'PNG', mg, yPos, 18, 18); } catch(e) {}
+                // ── Section title style ──────────────────────────────
+                function sectionTitle(text) {
+                    checkPage(14);
+                    fillRect(margin, yPos, colW, 9, 230, 248, 245);
+                    pdf.setDrawColor(0, 180, 150);
+                    pdf.setLineWidth(0.4);
+                    pdf.rect(margin, yPos, colW, 9);
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(0, 110, 90);
+                    pdf.text(text, margin + 4, yPos + 6.2);
+                    yPos += 12;
                 }
 
-                // Header
-                fillRect(logo ? mg + 22 : mg, yPos, colW - (logo ? 22 : 0), 18, 10, 30, 50);
-                pdf.setFontSize(14);
-                pdf.setTextColor(0, 212, 170);
-                pdf.text('Reporte de Distribucion Normal por Mezcla', logo ? mg + 26 : mg + 4, yPos + 7);
-                pdf.setFontSize(8.5);
-                pdf.setTextColor(170, 210, 210);
-                pdf.text(getCompanyName() + '  |  Edad: ' + ageLabel + '  |  Fecha: ' + new Date().toLocaleDateString('es-ES'), logo ? mg + 26 : mg + 4, yPos + 14);
-                yPos += 26;
-
-                // Chart
-                checkPage(100);
-                pdf.setFontSize(12);
-                pdf.setTextColor(0, 0, 0);
-                pdf.text('Grafica de Distribucion Normal', mg, yPos);
-                yPos += 6;
+                // ── Chart capture ────────────────────────────────────
+                sectionTitle('Grafica de Distribucion Normal');
                 try {
                     var chartCanvas = document.getElementById('normalDistChart');
-                    var chartImg = await html2canvas(chartCanvas, { backgroundColor: '#0a0e27', scale: 2 });
-                    var chartURL = chartImg.toDataURL('image/png');
+                    var chartImg = await html2canvas(chartCanvas, { backgroundColor: '#ffffff', scale: 2 });
                     var chartH = 85;
-                    pdf.addImage(chartURL, 'PNG', mg, yPos, colW, chartH);
-                    yPos += chartH + 10;
-                } catch(e) { yPos += 5; }
+                    pdf.addImage(chartImg.toDataURL('image/png'), 'PNG', margin, yPos, colW, chartH);
+                    yPos += chartH + 8;
+                } catch(e) { yPos += 4; }
 
-                // Compute mix stats
+                // ── Compute mix stats ────────────────────────────────
                 var mixStats = [];
                 mixes.forEach(function(mix) {
                     var strengths = [];
@@ -3958,110 +4096,128 @@
                         });
                     });
                     if (strengths.length < 2) return;
-                    var mean = strengths.reduce(function(a,b){return a+b;},0) / strengths.length;
-                    var variance = strengths.reduce(function(sum,v){return sum+Math.pow(v-mean,2);},0)/(strengths.length-1);
-                    var std = Math.sqrt(variance);
-                    var cv = (std/mean)*100;
-                    var passed = strengths.filter(function(s){return s>=mix.specStrength;}).length;
-                    var compliance = (passed/strengths.length)*100;
-                    var margin2 = mean - mix.specStrength;
-                    var zScore = std > 0 ? margin2/std : 0;
-                    mixStats.push({ mix: mix, mean: mean, std: std, cv: cv, compliance: compliance, margin: margin2, zScore: zScore, n: strengths.length, strengths: strengths });
+                    var mean     = strengths.reduce(function(a,b){return a+b;}, 0) / strengths.length;
+                    var variance = strengths.reduce(function(s,v){return s+Math.pow(v-mean,2);}, 0) / (strengths.length - 1);
+                    var std      = Math.sqrt(variance);
+                    var cv       = (std / mean) * 100;
+                    var passed   = strengths.filter(function(s){return s >= mix.specStrength;}).length;
+                    mixStats.push({
+                        mix: mix, mean: mean, std: std, cv: cv,
+                        compliance: (passed / strengths.length) * 100,
+                        margin: mean - mix.specStrength,
+                        zScore: std > 0 ? (mean - mix.specStrength) / std : 0,
+                        n: strengths.length, strengths: strengths
+                    });
                 });
 
-                if (mixStats.length > 0) {
-                    checkPage(50);
-                    pdf.setFontSize(12);
-                    pdf.setTextColor(0, 0, 0);
-                    pdf.text('Estadisticas por Mezcla', mg, yPos);
-                    yPos += 8;
+                if (mixStats.length === 0) {
+                    pdf.setFontSize(10); pdf.setTextColor(200,80,80);
+                    pdf.text('Sin datos suficientes para la edad seleccionada.', margin, yPos);
+                } else {
+                    // ── Summary stats table ──────────────────────────
+                    sectionTitle('Estadisticas por Mezcla');
 
-                    var cols = ['Mezcla', 'N', "f'c Esp.", 'Media (u)', 'Desv.Std (o)', 'CV %', 'Margen', 'b', 'Cumpl.'];
-                    var cws = [32, 8, 18, 20, 24, 12, 18, 12, 16];
-                    fillRect(mg, yPos, colW, 8, 0, 60, 80);
-                    pdf.setFontSize(7.5);
-                    pdf.setTextColor(255, 255, 255);
-                    var xc = mg + 2;
-                    cols.forEach(function(col, i) { pdf.text(col, xc, yPos + 5.5); xc += cws[i]; });
-                    yPos += 8;
+                    var headers = ['Mezcla', 'N', "f'c (PSI)", 'Media (u)', 'Desv.Std', 'CV %', 'Margen', 'beta', 'Cumpl.'];
+                    var cws     = [32, 8, 20, 20, 20, 12, 18, 14, 16];
 
-                    mixStats.forEach(function(stat, rowIdx) {
-                        checkPage(10);
-                        if (rowIdx % 2 === 0) fillRect(mg, yPos, colW, 8, 240, 248, 255);
-                        pdf.setFontSize(7.5);
-                        pdf.setTextColor(30, 30, 30);
+                    // Header row
+                    fillRect(margin, yPos, colW, 9, 0, 150, 130);
+                    pdf.setFontSize(7.5); pdf.setTextColor(255,255,255);
+                    var xc = margin + 2;
+                    headers.forEach(function(h, i) { pdf.text(h, xc, yPos + 6); xc += cws[i]; });
+                    yPos += 9;
+
+                    mixStats.forEach(function(s, ri) {
+                        checkPage(9);
+                        // Alternating row bg (light)
+                        fillRect(margin, yPos, colW, 8, ri%2===0 ? 250:242, ri%2===0 ? 252:248, ri%2===0 ? 251:249);
+                        pdf.setFontSize(7.5); pdf.setTextColor(40, 40, 40);
                         var vals = [
-                            stat.mix.id,
-                            '' + stat.n,
-                            '' + stat.mix.specStrength,
-                            '' + Math.round(stat.mean),
-                            '' + Math.round(stat.std),
-                            stat.cv.toFixed(1) + '%',
-                            (stat.margin >= 0 ? '+' : '') + Math.round(stat.margin),
-                            stat.zScore.toFixed(2),
-                            stat.compliance.toFixed(1) + '%'
+                            s.mix.id, ''+s.n, ''+s.mix.specStrength,
+                            Math.round(s.mean)+'', Math.round(s.std)+'',
+                            s.cv.toFixed(1)+'%',
+                            (s.margin>=0?'+':'')+Math.round(s.margin),
+                            s.zScore.toFixed(2), s.compliance.toFixed(1)+'%'
                         ];
-                        xc = mg + 2;
-                        vals.forEach(function(val, i) { pdf.text(val, xc, yPos + 5.5); xc += cws[i]; });
+                        xc = margin + 2;
+                        vals.forEach(function(v, i) {
+                            // Colour-code CV and compliance
+                            if (i===5) {
+                                if (s.cv<10) pdf.setTextColor(0,130,80);
+                                else if (s.cv<15) pdf.setTextColor(180,110,0);
+                                else pdf.setTextColor(200,40,40);
+                            } else if (i===8) {
+                                if (s.compliance>=95) pdf.setTextColor(0,130,80);
+                                else if (s.compliance>=85) pdf.setTextColor(180,110,0);
+                                else pdf.setTextColor(200,40,40);
+                            } else { pdf.setTextColor(40,40,40); }
+                            pdf.text(v, xc, yPos + 5.5);
+                            xc += cws[i];
+                        });
                         yPos += 8;
                     });
-                    yPos += 6;
+                    yPos += 4;
 
-                    // Legend
-                    checkPage(20);
-                    fillRect(mg, yPos, colW, 6, 220, 240, 255);
-                    pdf.setFontSize(8);
-                    pdf.setTextColor(0, 80, 120);
-                    pdf.text('Referencia: CV < 10% Excelente  |  CV 10-15% Aceptable  |  CV > 15% Alta variabilidad', mg + 3, yPos + 4);
-                    yPos += 8;
-                    fillRect(mg, yPos, colW, 6, 220, 255, 235);
-                    pdf.setTextColor(0, 100, 60);
-                    pdf.text('b (Indice confiabilidad): b >= 2.0 Optimo  |  b 1.5-2.0 Aceptable  |  b < 1.5 Requiere revision', mg + 3, yPos + 4);
+                    // ── Reference legend ─────────────────────────────
+                    checkPage(18);
+                    fillRect(margin, yPos, colW, 7, 232, 248, 244);
+                    pdf.setFontSize(7.5); pdf.setTextColor(0, 110, 90);
+                    pdf.text('CV < 10% Excelente   |   CV 10-15% Aceptable   |   CV > 15% Alta variabilidad', margin+3, yPos+4.8);
+                    yPos += 9;
+                    fillRect(margin, yPos, colW, 7, 232, 248, 244);
+                    pdf.setTextColor(0, 110, 90);
+                    pdf.text('beta >= 2.0 Optimo   |   beta 1.5-2.0 Aceptable   |   beta < 1.5 Requiere revision', margin+3, yPos+4.8);
                     yPos += 12;
 
-                    // Detail per mix
-                    mixStats.forEach(function(stat) {
-                        checkPage(40);
-                        pdf.setFontSize(11);
-                        pdf.setTextColor(0, 100, 140);
-                        pdf.text('Detalle: ' + stat.mix.id + ' — ' + stat.mix.project, mg, yPos);
+                    // ── Per-mix detail ───────────────────────────────
+                    mixStats.forEach(function(s) {
+                        checkPage(44);
+                        sectionTitle('Detalle: ' + s.mix.id + ' — ' + s.mix.project);
+
+                        pdf.setFontSize(8.5); pdf.setTextColor(60, 60, 60);
+                        pdf.text("f'c Especificada: " + s.mix.specStrength + " PSI   |   Planta: " + (s.mix.plant||'N/A') + "   |   Edad req.: " + (s.mix.requiredAge||28) + " dias", margin+2, yPos);
                         yPos += 6;
-                        pdf.setFontSize(8);
-                        pdf.setTextColor(60, 60, 60);
-                        pdf.text('f\'c Especificada: ' + stat.mix.specStrength + ' PSI  |  Planta: ' + (stat.mix.plant || 'N/A'), mg + 3, yPos);
-                        yPos += 5;
 
-                        var sorted = stat.strengths.slice().sort(function(a,b){return a-b;});
-                        var row = sorted.map(function(s,i){return (i+1)+'. '+s+' PSI';}).join('   ');
-                        var wrapped = pdf.splitTextToSize(row, colW - 4);
-                        wrapped.forEach(function(line) { checkPage(6); pdf.text(line, mg + 3, yPos); yPos += 5; });
-
-                        checkPage(14);
-                        pdf.setTextColor(0, 100, 140);
-                        pdf.text('u = ' + Math.round(stat.mean) + ' PSI   u+o = ' + Math.round(stat.mean+stat.std) + '   u-o = ' + Math.round(stat.mean-stat.std), mg + 3, yPos);
-                        yPos += 5;
-                        pdf.text('u+2o = ' + Math.round(stat.mean+2*stat.std) + '   u-2o = ' + Math.round(stat.mean-2*stat.std) + '   u+3o = ' + Math.round(stat.mean+3*stat.std) + '   u-3o = ' + Math.round(stat.mean-3*stat.std), mg + 3, yPos);
+                        // Sigma lines summary
+                        fillRect(margin, yPos, colW, 7, 232, 248, 244);
+                        pdf.setFontSize(7.5); pdf.setTextColor(0,110,90);
+                        pdf.text(
+                            'u=' + Math.round(s.mean) +
+                            '   u+s=' + Math.round(s.mean+s.std) +
+                            '   u-s=' + Math.round(s.mean-s.std) +
+                            '   u+2s=' + Math.round(s.mean+2*s.std) +
+                            '   u-2s=' + Math.round(s.mean-2*s.std) +
+                            '   u+3s=' + Math.round(s.mean+3*s.std) +
+                            '   u-3s=' + Math.round(s.mean-3*s.std),
+                            margin+3, yPos+4.8
+                        );
                         yPos += 10;
+
+                        // Sample values list
+                        var sorted  = s.strengths.slice().sort(function(a,b){return a-b;});
+                        var rowText = sorted.map(function(v,i){return (i+1)+'. '+v+' PSI';}).join('   ');
+                        var wrapped = pdf.splitTextToSize(rowText, colW - 4);
+                        pdf.setFontSize(7.5); pdf.setTextColor(50,50,50);
+                        wrapped.forEach(function(line) { checkPage(6); pdf.text(line, margin+2, yPos); yPos += 5; });
+                        yPos += 6;
                     });
                 }
 
-                // Footer
-                var pageCount = pdf.internal.getNumberOfPages();
-                for (var i = 1; i <= pageCount; i++) {
-                    pdf.setPage(i);
-                    pdf.setFontSize(7.5);
-                    pdf.setTextColor(150, 150, 150);
-                    pdf.text(getCompanyName() + ' — Distribucion Normal por Mezcla — Pag. ' + i + ' de ' + pageCount, mg, pageHeight - 8);
-                    pdf.text('Generado: ' + new Date().toLocaleString('es-ES'), pageWidth - mg - 60, pageHeight - 8);
+                // ── Footer on all pages ──────────────────────────────
+                var totalPgs = pdf.internal.getNumberOfPages();
+                for (var p = 1; p <= totalPgs; p++) {
+                    pdf.setPage(p);
+                    await addPDFFooter(pdf, p, totalPgs, 'Distribucion Normal por Mezcla — ' + ageLabel);
                 }
 
-                pdf.save('Distribucion_Normal_' + ageLabel.replace(' ', '_') + '_' + new Date().toISOString().slice(0,10) + '.pdf');
+                pdf.save('Distribucion_Normal_' + ageLabel.replace(/\s/g,'_') + '_' + new Date().toISOString().slice(0,10) + '.pdf');
 
             } catch(err) {
                 console.error('Error generating normal dist report:', err);
                 alert('Error al generar el reporte: ' + err.message);
             }
         }
+
 
         // ===== BACKUP & IMPORT =====
         function exportBackup() {
@@ -4073,116 +4229,224 @@
                     companyLogo: getCompanyLogo(),
                     mixes: getMixes()
                 };
-
                 var json = JSON.stringify(backup, null, 2);
                 var blob = new Blob([json], { type: 'application/json' });
-                var url = URL.createObjectURL(blob);
-
+                var url  = URL.createObjectURL(blob);
                 var date = new Date().toISOString().slice(0, 10);
-                var company = getCompanyName().replace(/[^a-zA-Z0-9]/g, '_');
-                var filename = 'Backup_' + company + '_' + date + '.json';
-
+                var co   = getCompanyName().replace(/[^a-zA-Z0-9]/g, '_');
+                var filename = 'Backup_' + co + '_' + date + '.json';
                 var a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
+                a.href = url; a.download = filename;
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
                 showToast('✅ Backup exportado: ' + filename, 'success');
             } catch(err) {
-                console.error('Backup error:', err);
-                showToast('❌ Error al exportar backup: ' + err.message, 'error');
+                showToast('❌ Error al exportar: ' + err.message, 'error');
             }
         }
 
         function importBackup(event) {
             var file = event.target.files[0];
             if (!file) return;
-
-            // Reset input so same file can be re-imported if needed
             event.target.value = '';
-
             var reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    var backup = JSON.parse(e.target.result);
-
-                    // Validate structure
-                    if (!backup.mixes || !Array.isArray(backup.mixes)) {
-                        showToast('❌ Archivo inválido: no contiene datos de mezclas.', 'error');
+                    var raw = JSON.parse(e.target.result);
+                    var backup = normalizeBackup(raw);
+                    if (!backup.mixes || !Array.isArray(backup.mixes) || backup.mixes.length === 0) {
+                        showToast('❌ Archivo inválido o sin mezclas detectadas.', 'error');
                         return;
                     }
-
-                    // Show confirmation modal
                     showImportConfirmModal(backup);
-
                 } catch(err) {
-                    console.error('Import parse error:', err);
                     showToast('❌ Error al leer el archivo: ' + err.message, 'error');
                 }
             };
             reader.readAsText(file);
         }
 
+        // Normalize data from v6 or any compatible format into roturas format
+        function normalizeBackup(raw) {
+            var backup = {
+                version:     raw.version || '1.0',
+                exportDate:  raw.exportDate || new Date().toISOString(),
+                companyName: raw.companyName || raw.empresa || '',
+                companyLogo: raw.companyLogo || raw.logo || '',
+                mixes:       []
+            };
+
+            var rawMixes = raw.mixes || raw.mezclas || raw.mixDesigns || [];
+
+            rawMixes.forEach(function(m) {
+                // Normalize tests: support both 'tests' and 'trials'
+                var tests = (m.tests || m.trials || []).map(function(t) {
+                    // Normalize ages: support both 'ages' and 'cilindros' array
+                    var ages = t.ages || [];
+
+                    // If no ages but has direct strength fields, build age groups
+                    if (ages.length === 0 && (t.resistencia7 || t.resistencia28)) {
+                        if (t.resistencia7)  ages.push({ age: 7,  strengths: [parseFloat(t.resistencia7)]  });
+                        if (t.resistencia28) ages.push({ age: 28, strengths: [parseFloat(t.resistencia28)] });
+                    }
+
+                    // Filter out ages with no strengths or all-zero strengths
+                    ages = ages.filter(function(a) {
+                        return a.strengths && a.strengths.some(function(s){ return parseFloat(s) > 0; });
+                    }).map(function(a) {
+                        return {
+                            age: parseInt(a.age) || 28,
+                            strengths: a.strengths.map(parseFloat).filter(function(s){ return s > 0; })
+                        };
+                    });
+
+                    return {
+                        date:  t.date || t.fecha || new Date().toISOString().slice(0,10),
+                        slump: parseFloat(t.slump || t.revenimiento || 0) || 0,
+                        ages:  ages
+                    };
+                }).filter(function(t) { return t.ages.length > 0; });
+
+                // Normalize materials
+                var mat = m.materials || m.materiales || {};
+                var materials = {
+                    cement:             parseFloat(mat.cement || mat.cemento || 0)       || 0,
+                    cementSupplier:     mat.cementSupplier || mat.proveedorCemento       || '',
+                    coarseAgg:          parseFloat(mat.coarseAgg || mat.grava || mat.grueso || 0) || 0,
+                    coarseAggSupplier:  mat.coarseAggSupplier || mat.proveedorGrava      || '',
+                    manSand:            parseFloat(mat.manSand || mat.arenaManufacturada || mat.arena1 || 0) || 0,
+                    manSandSupplier:    mat.manSandSupplier || mat.proveedorArena1       || '',
+                    natSand:            parseFloat(mat.natSand || mat.arenaNatural || mat.arena2 || 0) || 0,
+                    natSandSupplier:    mat.natSandSupplier || mat.proveedorArena2       || '',
+                    water:              parseFloat(mat.water || mat.agua || 0)           || 0
+                };
+
+                backup.mixes.push({
+                    id:           m.id || m.mixId || ('MIX-' + (backup.mixes.length + 1)),
+                    project:      m.project || m.proyecto || m.nombre || '',
+                    contractor:   m.contractor || m.contratista || m.cliente || '',
+                    plant:        m.plant || m.planta || '',
+                    description:  m.description || m.descripcion || m.nombre || '',
+                    qcManager:    m.qcManager || m.responsable || '',
+                    specStrength: parseInt(m.specStrength || m.resistencia || m.fc || 0) || 0,
+                    requiredAge:  parseInt(m.requiredAge || m.edadRequerida || 28)       || 28,
+                    materials:    materials,
+                    tests:        tests
+                });
+            });
+
+            return backup;
+        }
+
         function showImportConfirmModal(backup) {
             var existing = getMixes();
             var incoming = backup.mixes;
             var exportDate = backup.exportDate ? new Date(backup.exportDate).toLocaleString('es-ES') : 'desconocida';
+            var existingIds = existing.map(function(m){ return m.id; });
+            var newCount    = incoming.filter(function(m){ return !existingIds.includes(m.id); }).length;
+            var updateCount = incoming.filter(function(m){ return existingIds.includes(m.id); }).length;
+
+            // Build mix preview rows
+            var previewRows = '';
+            incoming.forEach(function(m) {
+                var totalTests = m.tests.reduce(function(acc, t){ return acc + t.ages.reduce(function(a2, a){ return a2 + a.strengths.length; }, 0); }, 0);
+                var ages = [];
+                m.tests.forEach(function(t){ t.ages.forEach(function(a){ if(!ages.includes(a.age)) ages.push(a.age); }); });
+                ages.sort(function(a,b){return a-b;});
+                var isNew = !existingIds.includes(m.id);
+                previewRows +=
+                    '<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">' +
+                    '<td style="padding:6px 8px;color:#e8eaed;font-size:0.82rem;">' + m.id + '</td>' +
+                    '<td style="padding:6px 8px;color:#8b92a8;font-size:0.82rem;">' + (m.project||'—') + '</td>' +
+                    '<td style="padding:6px 8px;color:#8b92a8;font-size:0.82rem;">' + (m.specStrength||0) + ' PSI</td>' +
+                    '<td style="padding:6px 8px;color:#8b92a8;font-size:0.82rem;">' + m.tests.length + ' pruebas / ' + totalTests + ' cil.</td>' +
+                    '<td style="padding:6px 8px;color:#8b92a8;font-size:0.82rem;">' + ages.join(', ') + ' d</td>' +
+                    '<td style="padding:6px 8px;"><span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:700;background:' +
+                        (isNew ? 'rgba(0,212,170,0.2);color:#00d4aa' : 'rgba(251,146,60,0.2);color:#fb923c') + ';">' +
+                        (isNew ? 'NUEVA' : 'ACTUALIZAR') + '</span></td>' +
+                    '</tr>';
+            });
 
             var modal = document.createElement('div');
             modal.id = 'importConfirmModal';
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:1rem;';
 
             var inner = document.createElement('div');
-            inner.style.cssText = 'background:linear-gradient(135deg,#0f1428 0%,#1a1f3a 100%);border:1px solid rgba(0,212,170,0.3);border-radius:16px;padding:2rem;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.8);';
+            inner.style.cssText = 'background:linear-gradient(135deg,#0f1428 0%,#1a1f3a 100%);border:1px solid rgba(0,212,170,0.3);border-radius:16px;padding:1.75rem;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.8);';
 
             inner.innerHTML =
-                '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">' +
-                    '<div style="background:linear-gradient(135deg,#00d4aa,#0077ff);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">&#128194;</div>' +
-                    '<div><h3 style="color:#e8eaed;margin:0;font-size:1.2rem;">Importar Backup</h3><p style="color:#8b92a8;margin:0;font-size:0.85rem;">Verificar datos antes de importar</p></div>' +
+                // Header
+                '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">' +
+                    '<div style="background:linear-gradient(135deg,#00d4aa,#0077ff);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">&#128202;</div>' +
+                    '<div><h3 style="color:#e8eaed;margin:0;font-size:1.15rem;">Importar Datos</h3>' +
+                    '<p style="color:#8b92a8;margin:0;font-size:0.82rem;">Revisa las mezclas detectadas antes de importar</p></div>' +
                 '</div>' +
-                '<div style="background:rgba(30,35,55,0.6);border-radius:10px;padding:1rem;margin-bottom:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">' +
-                    '<div style="color:#8b92a8;font-size:0.85rem;">Empresa en backup:</div>' +
-                    '<div style="color:#e8eaed;font-size:0.85rem;font-weight:600;">' + (backup.companyName || 'N/A') + '</div>' +
-                    '<div style="color:#8b92a8;font-size:0.85rem;">Fecha de exportaci&#243;n:</div>' +
-                    '<div style="color:#e8eaed;font-size:0.85rem;font-weight:600;">' + exportDate + '</div>' +
-                    '<div style="color:#8b92a8;font-size:0.85rem;">Mezclas en backup:</div>' +
-                    '<div style="color:#00d4aa;font-size:0.85rem;font-weight:700;">' + incoming.length + ' mezclas</div>' +
-                    '<div style="color:#8b92a8;font-size:0.85rem;">Mezclas actuales:</div>' +
-                    '<div style="color:#fb923c;font-size:0.85rem;font-weight:700;">' + existing.length + ' mezclas</div>' +
+
+                // Meta info
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:1rem;">' +
+                    '<div style="background:rgba(30,35,55,0.6);border-radius:8px;padding:0.6rem 0.75rem;">' +
+                        '<div style="color:#8b92a8;font-size:0.75rem;">Origen</div>' +
+                        '<div style="color:#e8eaed;font-size:0.85rem;font-weight:600;">' + (backup.companyName || 'Sin nombre') + '</div>' +
+                        '<div style="color:#8b92a8;font-size:0.72rem;">' + exportDate + '</div>' +
+                    '</div>' +
+                    '<div style="background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:8px;padding:0.6rem 0.75rem;">' +
+                        '<div style="color:#8b92a8;font-size:0.75rem;">Mezclas nuevas</div>' +
+                        '<div style="color:#00d4aa;font-size:1.3rem;font-weight:700;">' + newCount + '</div>' +
+                    '</div>' +
+                    '<div style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:8px;padding:0.6rem 0.75rem;">' +
+                        '<div style="color:#8b92a8;font-size:0.75rem;">Mezclas a actualizar</div>' +
+                        '<div style="color:#fb923c;font-size:1.3rem;font-weight:700;">' + updateCount + '</div>' +
+                    '</div>' +
                 '</div>' +
-                '<div style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:8px;padding:0.75rem;margin-bottom:1.25rem;">' +
-                    '<p style="color:#fb923c;font-size:0.85rem;margin:0;">&#9888;&#65039; Elige c&#243;mo importar los datos:</p>' +
+
+                // Preview table
+                '<div style="overflow-x:auto;margin-bottom:1rem;">' +
+                '<table style="width:100%;border-collapse:collapse;">' +
+                '<thead><tr style="background:rgba(0,212,170,0.1);">' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">ID</th>' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">Proyecto</th>' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">f\'c</th>' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">Datos</th>' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">Edades</th>' +
+                '<th style="padding:6px 8px;text-align:left;color:#00d4aa;font-size:0.78rem;border-bottom:1px solid rgba(0,212,170,0.2);">Estado</th>' +
+                '</tr></thead>' +
+                '<tbody>' + previewRows + '</tbody>' +
+                '</table></div>' +
+
+                // Mode description
+                '<div style="background:rgba(30,35,55,0.5);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.8rem;color:#8b92a8;line-height:1.5;">' +
+                '&#128260; <strong style="color:#e8eaed;">Combinar:</strong> Agrega las mezclas nuevas. Para mezclas duplicadas, fusiona los tests nuevos sin eliminar los existentes.<br>' +
+                '&#128256; <strong style="color:#e8eaed;">Reemplazar todo:</strong> Elimina todos los datos actuales y carga el backup completo.' +
                 '</div>' +
-                '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;" id="importModalBtns"></div>';
+
+                // Buttons placeholder
+                '<div style="display:flex;gap:0.6rem;flex-wrap:wrap;" id="importModalBtns"></div>';
 
             modal.appendChild(inner);
             document.body.appendChild(modal);
             window._pendingBackup = backup;
 
-            // Add buttons separately to avoid quote escaping issues
-            var btnContainer = inner.querySelector('#importModalBtns');
+            var btnC = inner.querySelector('#importModalBtns');
 
-            var btnMerge = document.createElement('button');
-            btnMerge.style.cssText = 'flex:1;min-width:120px;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#00d4aa,#0077ff);border:none;color:white;cursor:pointer;font-weight:700;font-size:0.9rem;';
-            btnMerge.innerHTML = '&#128256; Combinar<br><span style="font-size:0.75rem;font-weight:400;">Agregar nuevas, mantener actuales</span>';
-            btnMerge.onclick = function() { doImport('merge'); };
-            btnContainer.appendChild(btnMerge);
+            var b1 = document.createElement('button');
+            b1.style.cssText = 'flex:1;min-width:130px;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#00d4aa,#0077ff);border:none;color:white;cursor:pointer;font-weight:700;font-size:0.88rem;';
+            b1.innerHTML = '&#128260; Combinar<br><span style="font-size:0.72rem;font-weight:400;">Mezclas nuevas + fusionar tests</span>';
+            b1.onclick = function(){ doImport('merge'); };
+            btnC.appendChild(b1);
 
-            var btnReplace = document.createElement('button');
-            btnReplace.style.cssText = 'flex:1;min-width:120px;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:white;cursor:pointer;font-weight:700;font-size:0.9rem;';
-            btnReplace.innerHTML = '&#128260; Reemplazar<br><span style="font-size:0.75rem;font-weight:400;">Sobreescribir todo</span>';
-            btnReplace.onclick = function() { doImport('replace'); };
-            btnContainer.appendChild(btnReplace);
+            var b2 = document.createElement('button');
+            b2.style.cssText = 'flex:1;min-width:130px;padding:0.75rem;border-radius:8px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:white;cursor:pointer;font-weight:700;font-size:0.88rem;';
+            b2.innerHTML = '&#128256; Reemplazar todo<br><span style="font-size:0.72rem;font-weight:400;">Sobreescribir datos actuales</span>';
+            b2.onclick = function(){ doImport('replace'); };
+            btnC.appendChild(b2);
 
-            var btnCancel = document.createElement('button');
-            btnCancel.style.cssText = 'flex:1;min-width:120px;padding:0.75rem;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e8eaed;cursor:pointer;font-weight:600;font-size:0.9rem;';
-            btnCancel.textContent = '✕ Cancelar';
-            btnCancel.onclick = function() { closeImportModal(); };
-            btnContainer.appendChild(btnCancel);
+            var b3 = document.createElement('button');
+            b3.style.cssText = 'flex:1;min-width:100px;padding:0.75rem;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e8eaed;cursor:pointer;font-weight:600;font-size:0.88rem;';
+            b3.textContent = '✕ Cancelar';
+            b3.onclick = function(){ closeImportModal(); };
+            btnC.appendChild(b3);
         }
+
         function closeImportModal() {
             var modal = document.getElementById('importConfirmModal');
             if (modal) modal.remove();
@@ -4197,26 +4461,54 @@
                 var incoming = backup.mixes;
 
                 if (mode === 'replace') {
-                    // Full replace
                     saveMixes(incoming);
                     if (backup.companyName) saveCompanyName(backup.companyName);
                     if (backup.companyLogo) saveCompanyLogo(backup.companyLogo);
-                    showToast('✅ Datos reemplazados: ' + incoming.length + ' mezclas importadas.', 'success');
+                    showToast('✅ Datos reemplazados: ' + incoming.length + ' mezcla(s) importada(s).', 'success');
                 } else {
-                    // Merge: add mixes that don't already exist by ID
+                    // Smart merge: add new mixes, fuse tests for existing mixes
                     var existing = getMixes();
-                    var existingIds = existing.map(function(m) { return m.id; });
-                    var added = 0, skipped = 0;
-                    incoming.forEach(function(mix) {
-                        if (existingIds.includes(mix.id)) {
-                            skipped++;
-                        } else {
-                            existing.push(mix);
+                    var added = 0, updated = 0, skipped = 0;
+
+                    incoming.forEach(function(inMix) {
+                        var found = existing.find(function(e){ return e.id === inMix.id; });
+                        if (!found) {
+                            existing.push(inMix);
                             added++;
+                        } else {
+                            // Fuse tests: add tests that don't already exist (by date+age combo)
+                            var testsBefore = found.tests.length;
+                            inMix.tests.forEach(function(newTest) {
+                                // Check if a test for this date already has the same ages
+                                var dup = found.tests.find(function(et) {
+                                    if (et.date !== newTest.date) return false;
+                                    var etAges = et.ages.map(function(a){return a.age;}).sort().join(',');
+                                    var ntAges = newTest.ages.map(function(a){return a.age;}).sort().join(',');
+                                    return etAges === ntAges;
+                                });
+                                if (!dup) {
+                                    found.tests.push(newTest);
+                                }
+                            });
+                            var added2 = found.tests.length - testsBefore;
+                            if (added2 > 0) updated++;
+                            else skipped++;
+
+                            // Update materials if they were empty
+                            var mat = found.materials;
+                            var inMat = inMix.materials;
+                            if ((!mat.cement || mat.cement===0) && inMat.cement > 0) {
+                                found.materials = inMat;
+                            }
                         }
                     });
+
                     saveMixes(existing);
-                    showToast('✅ Importación combinada: ' + added + ' agregadas, ' + skipped + ' omitidas (ID duplicado).', 'success');
+                    var msg = '✅ Importación completada: ';
+                    if (added > 0)   msg += added   + ' nueva(s)  ';
+                    if (updated > 0) msg += updated + ' actualizada(s)  ';
+                    if (skipped > 0) msg += skipped + ' sin cambios';
+                    showToast(msg.trim(), 'success');
                 }
 
                 closeImportModal();
@@ -4231,6 +4523,7 @@
                 showToast('❌ Error al importar: ' + err.message, 'error');
             }
         }
+
 
         // ===== TOAST NOTIFICATION =====
         function showToast(message, type) {
@@ -4268,6 +4561,511 @@
                 toast.style.opacity = '0';
                 setTimeout(function() { if (toast.parentNode) toast.remove(); }, 400);
             }, 4000);
+        }
+
+        // ===== FULL COMPREHENSIVE REPORT =====
+        async function generateFullReport() {
+            try {
+                if (!window.jspdf) { alert('Error: jsPDF no está disponible.'); return; }
+                var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                var pageWidth  = pdf.internal.pageSize.width;
+                var pageHeight = pdf.internal.pageSize.height;
+                var margin = 18;
+                var colW   = pageWidth - 2 * margin;
+                var yPos;
+
+                // ── Resolve mixes ─────────────────────────────────────
+                var allMixes = getMixes();
+                var mixes = (selectedMixIds.includes('all') || selectedMixIds.length === 0)
+                    ? allMixes
+                    : allMixes.filter(function(m){ return selectedMixIds.includes(m.id); });
+
+                if (mixes.length === 0) { alert('No hay mezclas seleccionadas.'); return; }
+
+                // ── Helpers ───────────────────────────────────────────
+                function checkPage(h) {
+                    if (yPos + h > pageHeight - 18) { pdf.addPage(); yPos = 18; }
+                }
+
+                function fillRect(x, y, w, h, r, g, b) {
+                    pdf.setFillColor(r, g, b); pdf.rect(x, y, w, h, 'F');
+                }
+
+                function sectionBar(text, r, g, b) {
+                    checkPage(12);
+                    fillRect(margin, yPos, colW, 10, r||0, g||150, b||130);
+                    pdf.setFontSize(11); pdf.setTextColor(255, 255, 255);
+                    pdf.text(text, margin + 4, yPos + 7);
+                    yPos += 13;
+                }
+
+                function subTitle(text) {
+                    checkPage(11);
+                    fillRect(margin, yPos, colW, 8, 232, 248, 245);
+                    pdf.setDrawColor(0,180,150); pdf.setLineWidth(0.3);
+                    pdf.rect(margin, yPos, colW, 8);
+                    pdf.setFontSize(10); pdf.setTextColor(0, 110, 90);
+                    pdf.text(text, margin + 4, yPos + 5.8);
+                    yPos += 11;
+                }
+
+                function labelValue(label, value, x, y) {
+                    pdf.setFontSize(8); pdf.setTextColor(100,100,100);
+                    pdf.text(label + ':', x, y);
+                    pdf.setFontSize(8.5); pdf.setTextColor(30,30,30);
+                    pdf.text(String(value), x + pdf.getStringUnitWidth(label + ':') * 8 / pdf.internal.scaleFactor + 2, y);
+                }
+
+                function normalPDFval(x, mean, std) {
+                    if (std === 0) return 0;
+                    return (1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*Math.pow((x-mean)/std,2));
+                }
+
+                async function captureCanvas(id, bgColor) {
+                    try {
+                        var el = document.getElementById(id);
+                        if (!el) return null;
+                        var img = await html2canvas(el, { backgroundColor: bgColor || '#ffffff', scale: 2 });
+                        return img.toDataURL('image/png');
+                    } catch(e) { return null; }
+                }
+
+                // ══════════════════════════════════════════════════════
+                // PAGE 1 — COVER
+                // ══════════════════════════════════════════════════════
+                yPos = await buildPDFHeader(pdf,
+                    'Reporte Completo de Control de Calidad',
+                    mixes.length + ' mezcla(s) seleccionada(s)');
+
+                // Cover summary box
+                fillRect(margin, yPos, colW, 36, 245, 252, 250);
+                pdf.setDrawColor(0,180,150); pdf.setLineWidth(0.6);
+                pdf.rect(margin, yPos, colW, 36);
+
+                pdf.setFontSize(9); pdf.setTextColor(60,60,60);
+                var col1 = margin + 6, col2 = margin + colW/2 + 4;
+                pdf.text('Empresa:', col1, yPos + 8);
+                pdf.setTextColor(0,100,80); pdf.setFontSize(9.5);
+                pdf.text(getCompanyName(), col1 + 22, yPos + 8);
+
+                pdf.setTextColor(60,60,60); pdf.setFontSize(9);
+                pdf.text('Fecha de generacion:', col1, yPos + 16);
+                pdf.setTextColor(30,30,30); pdf.setFontSize(9.5);
+                pdf.text(new Date().toLocaleString('es-ES'), col1 + 46, yPos + 16);
+
+                pdf.setTextColor(60,60,60); pdf.setFontSize(9);
+                pdf.text('Mezclas incluidas:', col1, yPos + 24);
+                pdf.setTextColor(30,30,30); pdf.setFontSize(9.5);
+                pdf.text(mixes.map(function(m){return m.id;}).join(', '), col1 + 42, yPos + 24);
+
+                pdf.setTextColor(60,60,60); pdf.setFontSize(9);
+                pdf.text('Proyectos:', col2, yPos + 8);
+                pdf.setTextColor(30,30,30); pdf.setFontSize(9);
+                var projects = [...new Set(mixes.map(function(m){return m.project;}))].join(', ');
+                var projLines = pdf.splitTextToSize(projects, colW/2 - 10);
+                projLines.forEach(function(l,i){ pdf.text(l, col2+24, yPos+8+i*5); });
+
+                pdf.setTextColor(60,60,60); pdf.setFontSize(9);
+                pdf.text('Total pruebas:', col2, yPos + 24);
+                var totalPrb = 0;
+                mixes.forEach(function(m){ m.tests.forEach(function(t){ t.ages.forEach(function(a){ totalPrb+=a.strengths.length; }); }); });
+                pdf.setTextColor(0,100,80); pdf.setFontSize(9.5);
+                pdf.text(String(totalPrb), col2+34, yPos+24);
+
+                yPos += 42;
+
+                // Index
+                sectionBar('Contenido del Reporte', 0, 100, 90);
+                var sections = [
+                    '1.  Resumen Estadistico General',
+                    '2.  Grafica de Evolucion de Resistencia por Mezcla',
+                    '3.  Grafica de Distribucion de Resistencia General',
+                    '4.  Distribucion Normal por Mezcla',
+                    '5.  Detalle por Mezcla (materiales, pruebas, estadisticas)',
+                ];
+                sections.forEach(function(s, i) {
+                    checkPage(8);
+                    if (i%2===0) fillRect(margin, yPos, colW, 7, 248, 252, 251);
+                    pdf.setFontSize(9); pdf.setTextColor(40,40,40);
+                    pdf.text(s, margin + 6, yPos + 5);
+                    yPos += 7;
+                });
+                yPos += 6;
+
+                // ══════════════════════════════════════════════════════
+                // SECTION 1 — GENERAL STATISTICS
+                // ══════════════════════════════════════════════════════
+                pdf.addPage(); yPos = 18;
+                sectionBar('1. Resumen Estadistico General', 0, 140, 120);
+
+                // Per-mix stats table
+                var cols = ['Mezcla','Proyecto','f\'c Esp.','Edad','N','Media','Desv.Std','CV%','Cumpl.'];
+                var cws  = [22,38,18,14,8,18,18,12,16];
+                fillRect(margin, yPos, colW, 9, 0, 150, 130);
+                pdf.setFontSize(7.5); pdf.setTextColor(255,255,255);
+                var xc = margin + 2;
+                cols.forEach(function(c,i){ pdf.text(c, xc, yPos+6); xc+=cws[i]; });
+                yPos += 9;
+
+                mixes.forEach(function(mix, ri) {
+                    var strengths = [];
+                    var reqAge = mix.requiredAge || 28;
+                    mix.tests.forEach(function(t){ t.ages.forEach(function(a){
+                        if (a.age===reqAge) a.strengths.forEach(function(s){ strengths.push(s); });
+                    }); });
+                    var n    = strengths.length;
+                    var mean = n>0 ? strengths.reduce(function(a,b){return a+b;},0)/n : 0;
+                    var std  = n>1 ? Math.sqrt(strengths.reduce(function(s,v){return s+Math.pow(v-mean,2);},0)/(n-1)) : 0;
+                    var cv   = mean>0 ? (std/mean)*100 : 0;
+                    var pass = strengths.filter(function(s){return s>=mix.specStrength;}).length;
+                    var comp = n>0 ? (pass/n)*100 : 0;
+
+                    checkPage(9);
+                    fillRect(margin, yPos, colW, 8, ri%2===0?250:243, ri%2===0?252:248, ri%2===0?250:248);
+                    pdf.setFontSize(7.5); pdf.setTextColor(40,40,40);
+                    var vals = [mix.id, mix.project.substring(0,16), mix.specStrength+'', reqAge+' dias',
+                        n+'', Math.round(mean)+'', Math.round(std)+'',
+                        cv.toFixed(1)+'%', comp.toFixed(1)+'%'];
+                    xc = margin + 2;
+                    vals.forEach(function(v,i){
+                        if (i===8) { // compliance color
+                            pdf.setTextColor(comp>=95?0:comp>=85?160:200, comp>=95?130:comp>=85?100:40, comp>=95?80:0);
+                        } else if (i===7) { // cv color
+                            pdf.setTextColor(cv<10?0:cv<15?160:200, cv<10?130:cv<15?100:40, cv<10?80:0);
+                        } else { pdf.setTextColor(40,40,40); }
+                        pdf.text(v, xc, yPos+5.5); xc+=cws[i];
+                    });
+                    yPos += 8;
+                });
+                yPos += 8;
+
+                // ══════════════════════════════════════════════════════
+                // SECTION 2 — EVOLUTION CHART
+                // ══════════════════════════════════════════════════════
+                pdf.addPage(); yPos = 18;
+                sectionBar('2. Evolucion de Resistencia por Mezcla', 0, 140, 120);
+
+                // Evolution chart
+                var evoImg = await captureCanvas('evolutionChart', '#ffffff');
+                if (evoImg) {
+                    checkPage(95);
+                    pdf.addImage(evoImg, 'PNG', margin, yPos, colW, 88);
+                    yPos += 92;
+                }
+
+                // Per-mix evolution data table
+                mixes.forEach(function(mix) {
+                    checkPage(30);
+                    subTitle('Mezcla: ' + mix.id + ' — ' + mix.project + '  (f\'c = ' + mix.specStrength + ' PSI  |  Edad req.: ' + (mix.requiredAge||28) + ' dias)');
+
+                    // Build age summary
+                    var ageMap = {};
+                    mix.tests.forEach(function(t){ t.ages.forEach(function(a){
+                        if (!ageMap[a.age]) ageMap[a.age]=[];
+                        ageMap[a.age].push.apply(ageMap[a.age], a.strengths);
+                    }); });
+                    var ages = Object.keys(ageMap).map(Number).sort(function(a,b){return a-b;});
+
+                    if (ages.length > 0) {
+                        // Age summary table
+                        var ageCols = ['Edad (dias)','N','Promedio (PSI)','Min (PSI)','Max (PSI)','Desv.Std','CV%','vs f\'c'];
+                        var ageCws  = [26,10,28,22,22,20,16,20];
+                        fillRect(margin, yPos, colW, 8, 0, 150, 130);
+                        pdf.setFontSize(7.5); pdf.setTextColor(255,255,255);
+                        xc = margin + 2;
+                        ageCols.forEach(function(c,i){ pdf.text(c,xc,yPos+5.5); xc+=ageCws[i]; });
+                        yPos += 8;
+
+                        ages.forEach(function(age, ri) {
+                            var ss = ageMap[age];
+                            var mn = ss.reduce(function(a,b){return a+b;},0)/ss.length;
+                            var mi = Math.min.apply(null,ss);
+                            var mx = Math.max.apply(null,ss);
+                            var sd = ss.length>1?Math.sqrt(ss.reduce(function(s,v){return s+Math.pow(v-mn,2);},0)/(ss.length-1)):0;
+                            var cv = mn>0?(sd/mn)*100:0;
+                            var diff = Math.round(mn) - mix.specStrength;
+
+                            checkPage(8);
+                            fillRect(margin,yPos,colW,7,ri%2===0?250:243,ri%2===0?252:248,ri%2===0?250:248);
+                            pdf.setFontSize(7.5); pdf.setTextColor(40,40,40);
+                            var row = [age+'', ss.length+'', Math.round(mn)+'', mi+'', mx+'',
+                                Math.round(sd)+'', cv.toFixed(1)+'%', (diff>=0?'+':'')+diff+' PSI'];
+                            xc = margin + 2;
+                            row.forEach(function(v,i){
+                                if (i===7) pdf.setTextColor(diff>=0?0:200, diff>=0?130:40, diff>=0?80:0);
+                                else pdf.setTextColor(40,40,40);
+                                pdf.text(v,xc,yPos+5); xc+=ageCws[i];
+                            });
+                            yPos += 7;
+                        });
+
+                        // Cement efficiency if available
+                        var cement = mix.materials.cement;
+                        if (cement > 0) {
+                            yPos += 4;
+                            checkPage(8);
+                            fillRect(margin, yPos, colW, 7, 232, 248, 245);
+                            pdf.setFontSize(8); pdf.setTextColor(0,100,80);
+                            pdf.text('Cemento: ' + cement + ' lb/yd³   |   Proveedor: ' + (mix.materials.cementSupplier||'N/A'), margin+4, yPos+5);
+                            yPos += 7;
+
+                            ages.forEach(function(age) {
+                                var ss = ageMap[age];
+                                var mn = ss.reduce(function(a,b){return a+b;},0)/ss.length;
+                                var eff = (mn/cement).toFixed(2);
+                                checkPage(7);
+                                pdf.setFontSize(8); pdf.setTextColor(60,60,60);
+                                pdf.text('  Eficiencia del cemento a ' + age + ' dias: ' + eff + ' PSI/lb', margin+4, yPos+5);
+                                yPos += 6;
+                            });
+                        }
+                        yPos += 6;
+                    }
+                });
+
+                // ══════════════════════════════════════════════════════
+                // SECTION 3 — STRENGTH DISTRIBUTION (general chart)
+                // ══════════════════════════════════════════════════════
+                pdf.addPage(); yPos = 18;
+                sectionBar('3. Distribucion de Resistencia General', 0, 140, 120);
+
+                var distImg = await captureCanvas('strengthChart', '#ffffff');
+                if (distImg) {
+                    checkPage(90);
+                    pdf.addImage(distImg, 'PNG', margin, yPos, colW, 84);
+                    yPos += 88;
+                }
+
+                // Compliance summary
+                subTitle('Cumplimiento por Mezcla');
+                mixes.forEach(function(mix, ri) {
+                    var reqAge = mix.requiredAge || 28;
+                    var ss = [];
+                    mix.tests.forEach(function(t){ t.ages.forEach(function(a){
+                        if(a.age===reqAge) ss.push.apply(ss, a.strengths);
+                    }); });
+                    var pass = ss.filter(function(s){return s>=mix.specStrength;}).length;
+                    var comp = ss.length>0 ? (pass/ss.length)*100 : 0;
+                    var mean = ss.length>0 ? ss.reduce(function(a,b){return a+b;},0)/ss.length : 0;
+
+                    checkPage(9);
+                    fillRect(margin, yPos, colW, 8, ri%2===0?250:243, ri%2===0?252:248, ri%2===0?250:248);
+                    pdf.setFontSize(8); pdf.setTextColor(40,40,40);
+                    pdf.text(mix.id + ' — ' + mix.project, margin+4, yPos+5.5);
+                    pdf.setTextColor(comp>=95?0:comp>=85?160:200, comp>=95?130:comp>=85?100:40, comp>=95?80:0);
+                    pdf.text('Cumplimiento: ' + comp.toFixed(1) + '%  (' + pass + '/' + ss.length + ')', margin+120, yPos+5.5);
+                    pdf.setTextColor(60,60,60);
+                    pdf.text('Media: ' + Math.round(mean) + ' PSI', margin+165, yPos+5.5);
+                    yPos += 8;
+                });
+                yPos += 6;
+
+                // ══════════════════════════════════════════════════════
+                // SECTION 4 — NORMAL DISTRIBUTION
+                // ══════════════════════════════════════════════════════
+                pdf.addPage(); yPos = 18;
+                sectionBar('4. Distribucion Normal por Mezcla', 0, 140, 120);
+
+                var normImg = await captureCanvas('normalDistChart', '#ffffff');
+                if (normImg) {
+                    checkPage(90);
+                    pdf.addImage(normImg, 'PNG', margin, yPos, colW, 84);
+                    yPos += 88;
+                }
+
+                // Normal dist stats table
+                subTitle('Estadisticas de Distribucion Normal');
+                var ndCols = ['Mezcla','N','f\'c (PSI)','Media (u)','Desv.Std (s)','CV%','Margen','beta','Cumpl.'];
+                var ndCws  = [22,8,20,20,22,12,18,14,18];
+                fillRect(margin, yPos, colW, 9, 0, 150, 130);
+                pdf.setFontSize(7.5); pdf.setTextColor(255,255,255);
+                xc = margin + 2;
+                ndCols.forEach(function(c,i){ pdf.text(c,xc,yPos+6); xc+=ndCws[i]; });
+                yPos += 9;
+
+                mixes.forEach(function(mix, ri) {
+                    var all = [];
+                    mix.tests.forEach(function(t){ t.ages.forEach(function(a){ all.push.apply(all,a.strengths); }); });
+                    if (all.length < 2) return;
+                    var mean = all.reduce(function(a,b){return a+b;},0)/all.length;
+                    var std  = Math.sqrt(all.reduce(function(s,v){return s+Math.pow(v-mean,2);},0)/(all.length-1));
+                    var cv   = (std/mean)*100;
+                    var pass = all.filter(function(s){return s>=mix.specStrength;}).length;
+                    var comp = (pass/all.length)*100;
+                    var mg   = mean - mix.specStrength;
+                    var beta = std>0 ? mg/std : 0;
+
+                    checkPage(9);
+                    fillRect(margin,yPos,colW,8,ri%2===0?250:243,ri%2===0?252:248,ri%2===0?250:248);
+                    pdf.setFontSize(7.5); pdf.setTextColor(40,40,40);
+                    var row=[mix.id,''+all.length,''+mix.specStrength,Math.round(mean)+'',
+                        Math.round(std)+'', cv.toFixed(1)+'%',
+                        (mg>=0?'+':'')+Math.round(mg), beta.toFixed(2), comp.toFixed(1)+'%'];
+                    xc = margin+2;
+                    row.forEach(function(v,i){
+                        if(i===5){ pdf.setTextColor(cv<10?0:cv<15?160:200, cv<10?130:cv<15?100:40, cv<10?80:0); }
+                        else if(i===8){ pdf.setTextColor(comp>=95?0:comp>=85?160:200, comp>=95?130:comp>=85?100:40, comp>=95?80:0); }
+                        else { pdf.setTextColor(40,40,40); }
+                        pdf.text(v,xc,yPos+5.5); xc+=ndCws[i];
+                    });
+                    yPos += 8;
+                });
+                yPos += 4;
+
+                // Reference
+                checkPage(16);
+                fillRect(margin,yPos,colW,7,232,248,245);
+                pdf.setFontSize(7.5); pdf.setTextColor(0,100,80);
+                pdf.text('CV < 10% Excelente  |  CV 10-15% Aceptable  |  CV > 15% Alta variabilidad  |  beta >= 2.0 Optimo  |  beta < 1.5 Revisar', margin+3, yPos+4.8);
+                yPos += 12;
+
+                // ══════════════════════════════════════════════════════
+                // SECTION 5 — DETAIL PER MIX
+                // ══════════════════════════════════════════════════════
+                pdf.addPage(); yPos = 18;
+                sectionBar('5. Detalle por Mezcla', 0, 140, 120);
+
+                mixes.forEach(function(mix) {
+                    checkPage(50);
+                    subTitle(mix.id + ' — ' + mix.project);
+
+                    // Info grid
+                    var infos = [
+                        ['Contratista', mix.contractor||'N/A'],
+                        ['Planta', mix.plant||'N/A'],
+                        ['f\'c Especificada', mix.specStrength+' PSI'],
+                        ['Edad Requerida', (mix.requiredAge||28)+' dias'],
+                        ['Gerente QC', mix.qcManager||'N/A'],
+                        ['Descripcion', mix.description||'N/A'],
+                    ];
+                    var half = Math.ceil(infos.length/2);
+                    infos.forEach(function(pair, i) {
+                        if (i < half) {
+                            checkPage(7);
+                            if (i===0) { /* first row starts */ }
+                            pdf.setFontSize(7.5);
+                            pdf.setTextColor(100,100,100);
+                            pdf.text(pair[0]+':', margin+4, yPos+(i%half)*7+5);
+                            pdf.setTextColor(30,30,30);
+                            pdf.text(String(pair[1]).substring(0,30), margin+36, yPos+(i%half)*7+5);
+                        } else {
+                            pdf.setFontSize(7.5);
+                            pdf.setTextColor(100,100,100);
+                            pdf.text(pair[0]+':', margin+colW/2+4, yPos+((i-half)%half)*7+5);
+                            pdf.setTextColor(30,30,30);
+                            pdf.text(String(pair[1]).substring(0,30), margin+colW/2+36, yPos+((i-half)%half)*7+5);
+                        }
+                    });
+                    yPos += half*7 + 4;
+
+                    // Materials
+                    checkPage(14);
+                    fillRect(margin,yPos,colW,7,232,248,245);
+                    pdf.setFontSize(8); pdf.setTextColor(0,100,80);
+                    pdf.text('Materiales', margin+4, yPos+5);
+                    yPos += 9;
+                    var mats = [
+                        'Cemento: '+(mix.materials.cement||0)+' lb/yd³ ('+( mix.materials.cementSupplier||'N/A')+')',
+                        'Ag. Grueso: '+(mix.materials.coarseAgg||0)+' lb/yd³ ('+(mix.materials.coarseAggSupplier||'N/A')+')',
+                        'Arena Man.: '+(mix.materials.manSand||0)+' lb/yd³ ('+(mix.materials.manSandSupplier||'N/A')+')',
+                        'Arena Nat.: '+(mix.materials.natSand||0)+' lb/yd³ ('+(mix.materials.natSandSupplier||'N/A')+')',
+                        'Agua: '+(mix.materials.water||0)+' gal/yd³',
+                    ];
+                    mats.forEach(function(m,i){
+                        if(i%2===0 && i<4) {
+                            checkPage(6); pdf.setFontSize(7.5); pdf.setTextColor(50,50,50);
+                            pdf.text(m, margin+4, yPos+4.5);
+                            if (mats[i+1]) pdf.text(mats[i+1], margin+colW/2+4, yPos+4.5);
+                            yPos += 6;
+                        }
+                    });
+                    if (mats[4]) { checkPage(6); pdf.setFontSize(7.5); pdf.setTextColor(50,50,50); pdf.text(mats[4], margin+4, yPos+4.5); yPos+=6; }
+                    yPos += 3;
+
+                    // Tests table
+                    checkPage(16);
+                    fillRect(margin,yPos,colW,7,232,248,245);
+                    pdf.setFontSize(8); pdf.setTextColor(0,100,80);
+                    pdf.text('Resultados de Pruebas', margin+4, yPos+5);
+                    yPos += 9;
+
+                    var tCols = ['Fecha','Slump','Edad','R1 (PSI)','R2 (PSI)','R3 (PSI)','Prom.','vs f\'c'];
+                    var tCws  = [24,14,14,20,20,20,18,18];
+                    fillRect(margin,yPos,colW,8,0,150,130);
+                    pdf.setFontSize(7.5); pdf.setTextColor(255,255,255);
+                    xc = margin+2;
+                    tCols.forEach(function(c,i){ pdf.text(c,xc,yPos+5.5); xc+=tCws[i]; });
+                    yPos += 8;
+
+                    var rowCount = 0;
+                    mix.tests.forEach(function(test) {
+                        test.ages.forEach(function(a) {
+                            checkPage(8);
+                            fillRect(margin,yPos,colW,7,rowCount%2===0?250:243,rowCount%2===0?252:248,rowCount%2===0?250:248);
+                            pdf.setFontSize(7.5); pdf.setTextColor(40,40,40);
+                            var r1=a.strengths[0]||0, r2=a.strengths[1]||0, r3=a.strengths[2]||0;
+                            var cnt=a.strengths.filter(function(x){return x>0;}).length;
+                            var avg=cnt>0?Math.round(a.strengths.filter(function(x){return x>0;}).reduce(function(s,v){return s+v;},0)/cnt):0;
+                            var diff=avg-mix.specStrength;
+                            var row=[test.date,(test.slump||'')+'\"',a.age+' d',r1?r1+'':'—',r2?r2+'':'—',r3?r3+'':'—',avg+'PSI',(diff>=0?'+':'')+diff];
+                            xc=margin+2;
+                            row.forEach(function(v,i){
+                                if(i===7){ pdf.setTextColor(diff>=0?0:200,diff>=0?130:40,diff>=0?80:0); }
+                                else { pdf.setTextColor(40,40,40); }
+                                pdf.text(v,xc,yPos+4.8); xc+=tCws[i];
+                            });
+                            yPos+=7; rowCount++;
+                        });
+                    });
+                    yPos += 8;
+                });
+
+                // ── Footer on all pages ───────────────────────────────
+                var totalPgs = pdf.internal.getNumberOfPages();
+                for (var p = 1; p <= totalPgs; p++) {
+                    pdf.setPage(p);
+                    await addPDFFooter(pdf, p, totalPgs, 'Reporte Completo de Control de Calidad');
+                }
+
+                var fname = 'Reporte_Completo_' + new Date().toISOString().slice(0,10) + '.pdf';
+                pdf.save(fname);
+
+            } catch(err) {
+                console.error('Full report error:', err);
+                alert('Error al generar el reporte completo: ' + err.message);
+            }
+        }
+
+        // ===== SCM PERCENTAGE CALCULATOR =====
+        function calcSCMPcts() {
+            var portland = parseFloat(document.getElementById('cement').value) || 0;
+            var s1 = parseFloat(document.getElementById('scm1Weight').value) || 0;
+            var s2 = parseFloat(document.getElementById('scm2Weight').value) || 0;
+            var s3 = parseFloat(document.getElementById('scm3Weight').value) || 0;
+            var total = portland + s1 + s2 + s3;
+
+            function pct(w) { return total > 0 ? (w/total*100).toFixed(1)+'%' : ''; }
+
+            document.getElementById('scm1Pct').value = s1 > 0 ? pct(s1) : '';
+            document.getElementById('scm2Pct').value = s2 > 0 ? pct(s2) : '';
+            document.getElementById('scm3Pct').value = s3 > 0 ? pct(s3) : '';
+
+            var bar = document.getElementById('scmTotalsBar');
+            if (total > 0 && (s1 > 0 || s2 > 0 || s3 > 0)) {
+                bar.style.display = 'flex';
+                document.getElementById('scmTotalLbl').textContent   = total.toFixed(1) + ' lb/yd³';
+                document.getElementById('scmPortlandPct').textContent = pct(portland);
+                var parts = [];
+                var t1 = document.getElementById('scm1Type').value;
+                var t2 = document.getElementById('scm2Type').value;
+                var t3 = document.getElementById('scm3Type').value;
+                if (s1 > 0) parts.push((t1||'SCM 1') + ': ' + pct(s1));
+                if (s2 > 0) parts.push((t2||'SCM 2') + ': ' + pct(s2));
+                if (s3 > 0) parts.push((t3||'SCM 3') + ': ' + pct(s3));
+                document.getElementById('scmActiveList').textContent = parts.join('   ·   ');
+            } else {
+                bar.style.display = 'none';
+            }
         }
 
         // ===== EVENT LISTENERS =====
